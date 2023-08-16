@@ -461,7 +461,7 @@ class SCPCOAType(Serializable):
 
     def rederive(self, Grid, Position, GeoData):
         """
-        Rederive all derived quantities.
+        Re-derive all derived quantities.
 
         Parameters
         ----------

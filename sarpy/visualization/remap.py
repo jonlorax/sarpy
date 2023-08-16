@@ -44,7 +44,7 @@ def clip_cast(
         min_value: Union[None, int, float] = None,
         max_value: Union[None, int, float] = None) -> numpy.ndarray:
     """
-    Cast by clipping values outside of valid range, rather than truncating.
+    Cast by clipping values outside valid range, rather than truncating.
 
     Parameters
     ----------
@@ -72,7 +72,7 @@ def amplitude_to_density(
     """
     Convert to density data for remap.
 
-    This is a digested version of contents presented in a 1994 pulication
+    This is a digested version of contents presented in a 1994 publication
     entitled "Softcopy Display of SAR Data" by Kevin Mangis. It is unclear where
     this was first published or where it may be publicly available.
 
@@ -81,7 +81,7 @@ def amplitude_to_density(
     data : numpy.ndarray
         The (presumably complex) data to remap
     dmin : float|int
-        A dynamic range parameter. Lower this widens the range, will raising it
+        A dynamic range parameter. Lower this widens the range, raising it
         narrows the range. This was historically fixed at 30.
     mmult : float|int
         A contrast parameter. Low values will result is higher contrast and quicker
@@ -262,7 +262,7 @@ class RemapFunction(object):
     def dimension(self) -> int:
         """
         int: The (read-only) size of the (additional) output final dimension.
-        The value 0 is monochromatic, where the retuned output will have identical
+        The value 0 is monochromatic, where the returned output will have identical
         shape as input. Any other value should have additional final dimension of this size.
         """
 
@@ -466,7 +466,7 @@ class MonochromaticRemap(RemapFunction):
 
 
 ############
-# basic monchromatic collection
+# basic monochromatic collection
 
 class Density(MonochromaticRemap):
     """
@@ -500,7 +500,7 @@ class Density(MonochromaticRemap):
             The maximum output value. If provided, this must be in the interval
             :math:`[0, 2^{bit\_depth}]`
         dmin : float|int
-            A dynamic range parameter. Lower this widens the range, will raising it
+            A dynamic range parameter. Lower this widens the range, raising it
             narrows the range. This was historically fixed at 30.
         mmult : float|int
             A contrast parameter. Low values will result is higher contrast and quicker
@@ -514,7 +514,8 @@ class Density(MonochromaticRemap):
             calculated on a per calling array basis if not provided.
         """
 
-        MonochromaticRemap.__init__(self, override_name=override_name, bit_depth=bit_depth, max_output_value=max_output_value)
+        MonochromaticRemap.__init__(self, override_name=override_name, bit_depth=bit_depth,
+                                    max_output_value=max_output_value)
         self._data_mean = None
         self._dmin = None
         self._mmult = None
@@ -796,7 +797,7 @@ class GDM(MonochromaticRemap):
         """
         return self._data_median
 
-    @data_mean.setter
+    @data_median.setter
     def data_median(self, value: Optional[float]):
         self._data_median = None if value is None else float(value)
 
@@ -1141,7 +1142,8 @@ class Logarithmic(MonochromaticRemap):
         max_value : None|float
         """
 
-        MonochromaticRemap.__init__(self, override_name=override_name, bit_depth=bit_depth, max_output_value=max_output_value)
+        MonochromaticRemap.__init__(self, override_name=override_name, bit_depth=bit_depth,
+                                    max_output_value=max_output_value)
 
         if min_value is not None:
             min_value = float(min_value)
@@ -1345,7 +1347,7 @@ class PEDF(MonochromaticRemap):
             Override name for a specific class instance
         bit_depth : int
         dmin : float|int
-            A dynamic range parameter. Lower this widens the range, will raising it
+            A dynamic range parameter. Lower this widens the range, raising it
             narrows the range. This was historically fixed at 30.
         mmult : float|int
             A contrast parameter. Low values will result is higher contrast and quicker
@@ -1478,7 +1480,8 @@ class NRL(MonochromaticRemap):
         self._knee = None
         self._percentile = None
         self._stats = None
-        MonochromaticRemap.__init__(self, override_name=override_name, bit_depth=bit_depth, max_output_value=max_output_value)
+        MonochromaticRemap.__init__(self, override_name=override_name, bit_depth=bit_depth,
+                                    max_output_value=max_output_value)
         self._set_knee(knee)
         self._set_percentile(percentile)
         self._set_stats(stats)
@@ -1574,7 +1577,7 @@ class NRL(MonochromaticRemap):
         data : numpy.ndarray
             The (presumably) complex data to remap.
         stats : None|tuple
-            The stats `(minimum, maximum, chnageover)`, for consistent
+            The stats `(minimum, maximum, changeover)`, for consistent
             global use. The order of preference is the value provided here, the
             class `stats` property value, then calculated from the present
             sample.
@@ -1634,7 +1637,7 @@ class NRL(MonochromaticRemap):
         data : numpy.ndarray
             The (presumably) complex data to remap.
         stats : None|tuple
-            The stats `(minimum, maximum, chnageover)`, for consistent
+            The stats `(minimum, maximum, changeover)`, for consistent
             global use. The order of preference is the value provided here, the
             class `stats` property value, then calculated from the present
             sample.

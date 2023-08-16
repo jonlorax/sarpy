@@ -19,7 +19,6 @@ import numpy as np
 
 from sarpy.io.complex.sicd import SICDReader
 from sarpy.utils import sicd_sidelobe_control, create_product
-from sarpy.processing.sicd.spectral_taper import Taper
 import sarpy.visualization.remap as remap
 
 
@@ -76,19 +75,24 @@ def main(args=None):
             amp = np.abs(reader[:, :])
 
             if args.remap == 'density':
-                remap.register_remap(remap.Density(override_name='density', bit_depth=8, max_output_value=255,
+                remap.register_remap(remap.Density(override_name='density', bit_depth=8,
+                                                   max_output_value=255,
                                                    data_mean=float(np.mean(amp))), overwrite=True)
             elif args.remap == 'high_contrast':
-                remap.register_remap(remap.High_Contrast(override_name='high_contrast', bit_depth=8, max_output_value=255,
+                remap.register_remap(remap.High_Contrast(override_name='high_contrast', bit_depth=8,
+                                                         max_output_value=255,
                                                          data_mean=float(np.mean(amp))), overwrite=True)
             elif args.remap == 'brighter':
-                remap.register_remap(remap.Brighter(override_name='brighter', bit_depth=8, max_output_value=255,
+                remap.register_remap(remap.Brighter(override_name='brighter', bit_depth=8,
+                                                    max_output_value=255,
                                                     data_mean=float(np.mean(amp))), overwrite=True)
             elif args.remap == 'darker':
-                remap.register_remap(remap.Darker(override_name='darker', bit_depth=8, max_output_value=255,
+                remap.register_remap(remap.Darker(override_name='darker', bit_depth=8,
+                                                  max_output_value=255,
                                                   data_mean=float(np.mean(amp))), overwrite=True)
             elif args.remap == 'pedf':
-                remap.register_remap(remap.PEDF(override_name='darker', bit_depth=8, max_output_value=255,
+                remap.register_remap(remap.PEDF(override_name='darker', bit_depth=8,
+                                                max_output_value=255,
                                                 data_mean=float(np.mean(amp))), overwrite=True)
             elif args.remap == 'gdm':
                 graze_deg = reader.sicd_meta.SCPCOA.GrazeAng

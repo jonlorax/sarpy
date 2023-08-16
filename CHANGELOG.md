@@ -4,6 +4,14 @@ SarPy follows a continuous release process, so there are fairly frequent release
 Since essentially every (squash merge) commit corresponds to a release, specific 
 release points are not being annotated in GitHub.
 
+## [1.3.59] - 2023-08-16
+### Added
+- Added functions, classes, and utility programs to easily convert SICD to SIDD files.
+- Added utility program sicd_sidelobe_control.py to apply and or remove spectral taper window to SICD file.
+- Added utility program scid_to_sidd.py to convert SICD to SIDD file.
+### Fixed
+- SARPY correctly calculate SIDD metadata parameters.
+
 ## [1.3.58] - 2023-08-07
 ### Added
 - Added additional tests to test_sicd_elements_geodata.py
