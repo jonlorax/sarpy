@@ -17,7 +17,7 @@ import sarpy
 from sarpy.io.complex.converter import open_complex
 from sarpy.processing.ortho_rectify import BivariateSplineMethod, NearestNeighborMethod
 from sarpy.processing.sidd.sidd_product_creation import create_detected_image_sidd, \
-    create_csi_sidd, create_dynamic_image_sidd
+    create_csi_sidd, create_dynamic_image_sidd, create_linear_image_sidd
 import sarpy.visualization.remap as remap
 
 
@@ -47,7 +47,7 @@ def main(args=None):
              '* The name for the output file(s) will be chosen based on CoreName and\n '
              '  transmit/collect polarization.\n')
     parser.add_argument(
-        '-t', '--type', default='detected', choices=['detected', 'csi', 'dynamic'],
+        '-t', '--type', default='detected', choices=['detected', 'csi', 'dynamic','linear'],
         help="The type of derived product.")
     parser.add_argument(
         '-r', '--remap', default=remap.get_remap_names()[0], choices=remap.get_remap_names(),
@@ -88,6 +88,11 @@ def main(args=None):
                             version=args.version, include_sicd=args.sicd)
         elif args.type == 'dynamic':
             create_dynamic_image_sidd(ortho_helper, args.output_directory,
+                                      remap_function=remap.get_registered_remap(args.remap),
+                                      version=args.version, include_sicd=args.sicd)
+        elif args.type == 'linear':
+            print("Made it to 16 bit linear image")
+            create_linear_image_sidd(ortho_helper, args.output_directory,
                                       remap_function=remap.get_registered_remap(args.remap),
                                       version=args.version, include_sicd=args.sicd)
         else:
