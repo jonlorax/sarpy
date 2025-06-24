@@ -24,7 +24,7 @@ git checkout master
 git branch fb_bug1
 ```
 3. Make your fixes in fb_bug1
-4. Synch the master branch in your fork with the master branch in the original project.
+4. Sync the master branch in your fork with the master branch in the original project.
 5. Merge your code from fb_bug1 into dev
 ```
 git checkout master
