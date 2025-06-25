@@ -57,7 +57,7 @@ def main(args=None):
         help="The interpolation method.")
     parser.add_argument(
         '-b', '--bit_depth', default='8', choices=['8', '16' ],
-        help="Bit depth.")
+        help="SIDD product Pixel Bit depth.")
     parser.add_argument(
         '--version', default=2, type=int, choices=[1, 2, 3],
         help="The version of the SIDD standard used.")
