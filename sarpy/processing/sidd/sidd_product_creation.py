@@ -96,7 +96,7 @@ def _validate_remap_function(remap_function):
 
 def create_detected_image_sidd(
         ortho_helper, output_directory, output_file=None, block_size=10, dimension=0,
-        bounds=None, version=3, include_sicd=True, remap_function=None):
+        bounds=None, version=3, include_sicd=True, remap_function=NRL):
     """
     Create a SIDD version of a basic detected image from a SICD type reader.
 
@@ -181,7 +181,7 @@ def create_detected_image_sidd(
 
 def create_csi_sidd(
         ortho_helper, output_directory, output_file=None, dimension=0,
-        block_size=30, bounds=None, version=3, include_sicd=True, remap_function=None):
+        block_size=30, bounds=None, version=3, include_sicd=True, remap_function=NRL):
     """
     Create a SIDD version of a Color Sub-Aperture Image from a SICD type reader.
 
@@ -271,7 +271,7 @@ def create_csi_sidd(
 def create_dynamic_image_sidd(
         ortho_helper, output_directory, output_file=None, dimension=0, block_size=10,
         bounds=None, frame_count=9, aperture_fraction=0.2, method='FULL', version=3,
-        include_sicd=True, remap_function=None):
+        include_sicd=True, remap_function=NRL):
     """
     Create a SIDD version of a Dynamic Image (Sub-Aperture Stack) from a SICD type reader.
 
