@@ -54,6 +54,7 @@ from sarpy.io.product.sidd1_elements.GeographicAndTarget import GeographicAndTar
 from sarpy.io.product.sidd1_elements.Measurement import MeasurementType as MeasurementType1
 from sarpy.io.product.sidd1_elements.ExploitationFeatures import ExploitationFeaturesType as ExploitationFeaturesType1
 from sarpy.io.product.sidd1_elements.ProductCreation import ProductCreationType as ProductCreationType1
+from sarpy.visualization.remap import NRL
 
 logger = logging.getLogger(__name__)
 
@@ -209,7 +210,7 @@ def _create_plane_projection_v3(proj_helper, bounds):
 #########################
 # Version 3 element creation
 
-def create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type, remap_function=None ):
+def create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type, remap_function=NRL ):
     """
     Create a SIDD version 3.0 structure based on the orthorectification helper
     and pixel bounds.
@@ -326,7 +327,7 @@ def create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type, re
 #########################
 # Version 2 element creation
 
-def create_sidd_structure_v2(ortho_helper, bounds, product_class, pixel_type, remap_function=None ):
+def create_sidd_structure_v2(ortho_helper, bounds, product_class, pixel_type, remap_function=NRL ):
     """
     Create a SIDD version 2.0 structure based on the orthorectification helper
     and pixel bounds.
@@ -521,7 +522,7 @@ def create_sidd_structure_v1(ortho_helper, bounds, product_class, pixel_type):
 ##########################
 # Switchable version SIDD structure
 
-def create_sidd_structure(ortho_helper, bounds, product_class, pixel_type, version=3, remap_function=None):
+def create_sidd_structure(ortho_helper, bounds, product_class, pixel_type, version=3, remap_function=NRL):
     """
     Create a SIDD structure, with version specified, based on the orthorectification
     helper and pixel bounds.
