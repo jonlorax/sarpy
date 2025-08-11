@@ -1826,8 +1826,8 @@ def register_remap(
     None
     """
 
-    if isinstance(remap_function, type) and issubclass(remap_function, RemapFunction):
-        remap_function = remap_function( bit_depth=bit_depth)
+    # kill me if isinstance(remap_function, type) and issubclass(remap_function, RemapFunction):
+    # kill me   remap_function = remap_function( bit_depth=bit_depth)
     if not isinstance(remap_function, RemapFunction):
         raise TypeError('remap_function must be an instance of RemapFunction.')
 
@@ -1955,9 +1955,20 @@ def get_registered_remap(
     if int( bit_depth ) not in [ 8, 16 ]:
         raise KeyError('Unregistered remap name `{}` with bit_depth `{}`'.format( remap_name, bit_depth ))
         
-    if int( bit_depth ) == 16:
+    # Option   Remap name              -b option               Return
+    # 1                linear                  n/a                     linear
+    # 2                linear                  8                       linear
+    # 3                linear                  16                      linera_16
+    # 4                linear_16               n/a                     linear_16
+    # 5                linera_16               16                      linear_16
+
+    # if user sending in a _16 name  Option 4, 5
+    if remap_name.find( '_16' ) > -1:
+        rm_name  = remap_name
+    # if user not sending in a _16 name but is wanted 16 bit remap via -b:  Option 3 
+    elif int( bit_depth ) == 16:
         rm_name = remap_name + '_' + str( bit_depth )
-    else:
+    else: # Option 1 and 2
         rm_name = remap_name 
         
     if rm_name in _REMAP_DICT:
