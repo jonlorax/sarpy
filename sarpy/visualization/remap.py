@@ -2162,3 +2162,6 @@ def nrl(data, stats=None):
         'use the NRL class, which is also callable', DeprecationWarning)
     remapper = get_registered_remap('nrl')
     return remapper(data, stats=stats)
+    
+# set/instansiate the default remapper
+NRL = get_registered_remap('nrl')
