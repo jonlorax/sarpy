@@ -2165,3 +2165,4 @@ def nrl(data, stats=None):
     
 # set/instansiate the default remapper
 NRL = get_registered_remap('nrl')
+DEFAULT_REMAPPER = NRL
