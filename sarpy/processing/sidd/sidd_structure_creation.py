@@ -54,7 +54,7 @@ from sarpy.io.product.sidd1_elements.GeographicAndTarget import GeographicAndTar
 from sarpy.io.product.sidd1_elements.Measurement import MeasurementType as MeasurementType1
 from sarpy.io.product.sidd1_elements.ExploitationFeatures import ExploitationFeaturesType as ExploitationFeaturesType1
 from sarpy.io.product.sidd1_elements.ProductCreation import ProductCreationType as ProductCreationType1
-from sarpy.visualization.remap import NRL
+from sarpy.visualization.remap import DEFAULT_REMAPPER
 
 logger = logging.getLogger(__name__)
 
@@ -225,6 +225,8 @@ def create_sidd_structure_v3(ortho_helper, bounds, product_class, pixel_type, re
         :code:`Dynamic Image, Amplitude Change Detection, Coherent Change Detection`
     pixel_type : str
         Must be one of `MONO8I, MONO16I` or `RGB24I`.
+    remap_function: RemapFunction
+        Must be an instantiation of the RemapFunction class  see sarpy/visualation/remapper
 
     Returns
     -------
@@ -342,6 +344,8 @@ def create_sidd_structure_v2(ortho_helper, bounds, product_class, pixel_type, re
         :code:`Dynamic Image, Amplitude Change Detection, Coherent Change Detection`
     pixel_type : str
         Must be one of `MONO8I, MONO16I` or `RGB24I`.
+    remap_function: RemapFunction
+        Must be an instantiation of the RemapFunction class  see sarpy/visualation/remapper        
 
     Returns
     -------
@@ -522,7 +526,7 @@ def create_sidd_structure_v1(ortho_helper, bounds, product_class, pixel_type):
 ##########################
 # Switchable version SIDD structure
 
-def create_sidd_structure(ortho_helper, bounds, product_class, pixel_type, version=3, remap_function=NRL):
+def create_sidd_structure(ortho_helper, bounds, product_class, pixel_type, version=3, remap_function=DEFAULT_REMAPPER):
     """
     Create a SIDD structure, with version specified, based on the orthorectification
     helper and pixel bounds.
@@ -539,6 +543,8 @@ def create_sidd_structure(ortho_helper, bounds, product_class, pixel_type, versi
         Must be one of `MONO8I, MONO16I` or `RGB24I`.
     version : int
         The SIDD version, must be either 1, 2, or 3.
+    remap_function: RemapFunction
+        Must be an instantiation of the RemapFunction class  see sarpy/visualation/remapper        
 
     Returns
     -------
