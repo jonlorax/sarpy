@@ -424,18 +424,16 @@ class SIOWriter(BaseWriter):
         # choose magic number (with user data) and corresponding endian-ness
         magic_number = 0xFD7F02FF
         endian = SIODetails.ENDIAN[magic_number]
-        print('Endian: ' + endian)
-
+        
         # define basic image details
         raw_shape = (sicd_meta.ImageData.NumRows, sicd_meta.ImageData.NumCols, 2)
         pixel_type = sicd_meta.ImageData.PixelType
-        print('Pixel_type: ' + pixel_type)
         format_function = None
         if pixel_type == 'RE32F_IM32F':
             raw_dtype = numpy.dtype('{}f4'.format(endian))
             element_type = 13
             element_size = 8
-            if raw_dtype == numpy.dtype('complex64') :
+            if input_data_type == 'complex64' :
                 format_function = ComplexFormatFunction(raw_dtype, order='IQ', band_dimension=2)
         elif pixel_type == 'RE16I_IM16I':
             raw_dtype = numpy.dtype('{}i2'.format(endian))
@@ -478,7 +476,7 @@ class SIOWriter(BaseWriter):
             data_segment = NumpyArraySegment(
                 underlying_array, 'complex64', raw_shape[:2], format_function=format_function, mode='w')
             self._data_written = False
-        elif raw_dtype == numpy.dtype('complex64'):
+        elif input_data_type == numpy.dtype('complex64'):
             data_segment = NumpyMemmapSegment(
                 self._file_name, self._data_offset, raw_dtype, raw_shape,
                 'complex64', raw_shape[:2], format_function=format_function, mode='w', close_file=False)
