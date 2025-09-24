@@ -478,9 +478,13 @@ class SIOWriter(BaseWriter):
                 'complex64', raw_shape[:2], format_function=format_function, mode='w', close_file=False)
             self._data_written = True
         else:
-            data_segment = NumpyMemmapSegment(
-                self._file_name, self._data_offset, raw_dtype, raw_shape,
-                mode='w')
+            memmap = numpy.memmap(
+                self._file_name, dtype='float64',
+                mode='r+', shape=raw_shape) # I think this should be 'write'
+            data_segment = NumpyArraySegment(memmap, 'float64', mode='w')
+            # data_segment = NumpyMemmapSegment(
+            #     self._file_name, self._data_offset, raw_dtype, raw_shape,
+            #     formatted_dtype=raw_dtype, mode='w')
             self._data_written = True
         BaseWriter.__init__(self, data_segment)
 
