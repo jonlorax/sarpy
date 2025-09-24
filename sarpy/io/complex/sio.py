@@ -381,7 +381,8 @@ class SIOWriter(BaseWriter):
             sicd_meta: SICDType,
             user_data: Optional[Dict[str, str]] = None,
             check_older_version: bool = False,
-            check_existence: bool = True):
+            check_existence: bool = True,
+            input_data_type: str = 'complex64'):
         """
 
         Parameters
@@ -394,6 +395,11 @@ class SIOWriter(BaseWriter):
             application compliance issues?
         check_existence : bool
             Should we check if the given file already exists, and raises an exception if so?
+        input_data_type: str = 'complex64'
+            The initial version of this function assumed that we were dealing 
+            with complex64 data types. This variable allows us to account for
+            other data type possibilities while maintaining backwards 
+            compatibility.
         """
 
         self._data_written = True
@@ -478,13 +484,15 @@ class SIOWriter(BaseWriter):
                 'complex64', raw_shape[:2], format_function=format_function, mode='w', close_file=False)
             self._data_written = True
         else:
+            # Case for datatypes that are not complex64. 
+            # Create a numpy memmap to write data to a file.
             memmap = numpy.memmap(
-                self._file_name, dtype='float64',
-                mode='r+', shape=raw_shape) # I think this should be 'write'
-            data_segment = NumpyArraySegment(memmap, 'float64', mode='w')
-            # data_segment = NumpyMemmapSegment(
-            #     self._file_name, self._data_offset, raw_dtype, raw_shape,
-            #     formatted_dtype=raw_dtype, mode='w')
+                self._file_name, dtype=input_data_type,
+                mode='r+', shape=raw_shape) 
+            # Use the numpy memmap as the base for the custom NumpyArraySegment.
+            data_segment = NumpyArraySegment(memmap, 
+                                             formatted_dtype=input_data_type, 
+                                             mode='w')
             self._data_written = True
         BaseWriter.__init__(self, data_segment)
 
