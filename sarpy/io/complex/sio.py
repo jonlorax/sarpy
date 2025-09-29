@@ -60,15 +60,24 @@ class SIODetails(object):
         if not os.path.isfile(file_name):
             raise SarpyIOError('Path {} is not a file'.format(file_name))
 
+        # Note, the first 20 bytes of an SIO file make up the header.
+        # This section of code inturprets that header information.
         with open(file_name, 'rb') as fi:
+            # Get the first 4 bytes from the file as a big endian, unsigned int.
             self._magic_number = struct.unpack(">I", fi.read(4))[0]
+            # Convert the first four bytes from the file into an endian indicator 
+            # for the contents of the rest of the file.
             endian = self.ENDIAN.get(self._magic_number, None)
             if endian is None:
                 raise SarpyIOError(
                     'File {} is not an SIO file. Got magic number {}'.format(file_name, self._magic_number))
 
             # reader basic header - (rows, columns, data_type, pixel_size)?
-            init_head = numpy.array(struct.unpack('{}4I'.format(endian), fi.read(16)), dtype=numpy.uint64)
+            # Get the next 16 bytes from the file.
+            # init_head = numpy.array(struct.unpack('{}4I'.format(endian), fi.read(16)), dtype=numpy.uint64)
+            # The 20 byte header is always ">I"
+            init_head = numpy.array(struct.unpack(">I", fi.read(16)), 
+                                    dtype=numpy.uint64)
             if not (numpy.all(init_head[2:] == numpy.array([13, 8]))
                     or numpy.all(init_head[2:] == numpy.array([12, 4]))
                     or numpy.all(init_head[2:] == numpy.array([11, 2]))):
