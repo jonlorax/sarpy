@@ -8,11 +8,13 @@
 # //////////////////////////////////////////
 # /// CLASSIFICATION: UNCLASSIFIED       ///
 # //////////////////////////////////////////
-class SIOWriter < FlatfileImageWriter
+
+from sarpy.io.complex.generic.FlatfileImageWriter import FlatfileImageWriter
+from sarpy.io.complex.sicd_elements.SICD import SICDType
+
+class SIOWriter(FlatfileImageWriter):
     
-    methods
-        # Constructor
-        function obj = SIOWriter(filename, sicdmeta, varargin)
+    def __init__(
             # Parse inputs
             # These inputs are really parsed later in the superclass
             # constructor.  Here just need to 1) extract
@@ -20,78 +22,82 @@ class SIOWriter < FlatfileImageWriter
             # and 2) make sure that no additional arguments are passed--
             # like header_skip, which could break things, if passed on to
             # the superclass constructor.
-            p = inputParser;
-            p.addParamValue('data_type',0);
-            p.addParamValue('is_complex',0);
-            p.addParamValue('include_sicd_metadata',true,@(x) isscalar(x)&&islogical(x));
-            p.FunctionName = 'SIOWriter';
-            p.parse(varargin{:});
-            
-            # We'll use a fixed definition SIO header with (possibly) one user-data segment.
-            # The header will the look like this:
-            #    Core SIO header:
-            #       Magic key   (4 byte uint, fixed value of 'FF027FFD')
-            #       Rows        (4 byte uint)
-            #       Columns     (4 byte uint)
-            #       Data type   (4 byte uint)
-            #       Data size   (4 byte uint, # bytes per element)
-            #    Optional "user data":
-            #       Num pairs   (4 byte uint, # pairs of user data, fixed at 1)
-            #       Name bytes  (4 byte uint, # bytes in name of user element,
-            #                    fixed at 8 for name "SICDMETA")
-            #       Name        (8 bytes containing "SICDMETA")
-            #       Value bytes (4 byte uint, value is length of XML string)
-            #       Value       (XML string holding SICD metadata)
-            header_skip = 5*4; # SIO header with no user data is 5 uint32 words
-            if p.Results.include_sicd_metadata
-                XML_meta_string = sicdstruct2xml(sicdmeta, 'inc_newline', false, ...
-                    'inc_padding', false, 'file_type', 'SICD');
-                header_skip = header_skip + 4 + 4 + 8 + 4 + length(XML_meta_string); # Add user data length
-            end
-            
-            # Construct base object
-            obj = obj@FlatfileImageWriter(filename, sicdmeta, 'header_skip', header_skip, varargin{:});
-            
-            # Open file and write SIO header
-            obj.FID = fopen(filename,'w', 'b'); # We always write big-endian
-            # Magic key
-            if p.Results.include_sicd_metadata
-                magic_key = hex2dec('FF027FFD'); # Indicates big endian, with user-data
-            else
-                magic_key = hex2dec('FF017FFE'); # Indicates big endian, with no user-data
-            end
-            fwrite(obj.FID, magic_key, 'uint32');
-            # Rows and columns
-            fwrite(obj.FID, obj.image_size(2), 'uint32');
-            fwrite(obj.FID, obj.image_size(1), 'uint32');
-            # Data type and size
-            [ element_type, element_length ] = matlabtype2sio( obj.data_type, obj.is_complex );
-            fwrite(obj.FID, element_type, 'uint32');
-            fwrite(obj.FID, element_length, 'uint32');
-            # User data
-            if p.Results.include_sicd_metadata
-                fwrite(obj.FID, 1, 'uint32');                       # Num pairs of user data
-                fwrite(obj.FID, 8, 'uint32');                       # Pair 1 name length
-                fwrite(obj.FID, 'SICDMETA', 'char');                # Pair 1 name
-                fwrite(obj.FID, length(XML_meta_string), 'uint32'); # Pair 1 value length
-                fwrite(obj.FID, XML_meta_string, 'char');           # Pair 1 value
-            end
-        end
+            self,
+            param_filename:              str, 
+            param_sicdmeta:              SICDType,
+            # numpy data types. "uint8", "float32", etc.
+            param_data_type_str:         str = 'complex64', 
+            param_data_type_code:        int = 13,
+            param_is_complex:            bool = True,       # Boolean
+            param_include_sicd_metadata: bool = True,       # Boolean
+    ):
+        # We'll use a fixed definition SIO header with (possibly) one user-data segment.
+        # The header will the look like this:
+        #    Core SIO header:
+        #       Magic key   (4 byte uint, fixed value of 'FF027FFD')
+        #       Rows        (4 byte uint)
+        #       Columns     (4 byte uint)
+        #       Data type   (4 byte uint)
+        #       Data size   (4 byte uint, # bytes per element)
+        #    Optional "user data":
+        #       Num pairs   (4 byte uint, # pairs of user data, fixed at 1)
+        #       Name bytes  (4 byte uint, # bytes in name of user element,
+        #                    fixed at 8 for name "SICDMETA")
+        #       Name        (8 bytes containing "SICDMETA")
+        #       Value bytes (4 byte uint, value is length of XML string)
+        #       Value       (XML string holding SICD metadata)
+        self._include_sicd_metadata = param_include_sicd_metadata
+        header_skip = 5*4 # SIO header with no user data is 5 uint32 words
+        if self._include_sicd_metadata:
+            XML_meta_string = param_sicdmeta.to_xml_string()
+            header_skip = header_skip + 4 + 4 + 8 + 4 + len(XML_meta_string); # Add user data length
         
-        # Destructor
-        function delete(obj)
-            # If data has not been written to the end of the pre-defined
-            # image data size, fill out rest of file space with zeros.
-            image_data_size = (obj.is_complex + 1) * ...
-                prod(double(obj.image_size)) * ...
-                obj.data_size;
-            obj.fseek(obj.FID,obj.header_skip+image_data_size,'bof');
-
-            fclose(obj.FID);
-        end
-    end
+        # Call the init function of the parent class
+        super().__init__(param_filename=param_filename, 
+                         param_sicdmeta=param_sicdmeta,
+                         param_data_type_str=param_data_type_str,
+                         param_data_type_code=param_data_type_code,
+                         param_is_complex=param_is_complex,
+                         param_header_skip=header_skip)
+        
+        # Magic key
+        # We always write big-endian
+        if param_include_sicd_metadata:
+            magic_key = 0xFF027FFD # Indicates big endian, with user-data
+        else:
+            magic_key = 0xFF017FFE # Indicates big endian, with no user-data
+        self._fid.seek(0)
+        self._fid.write(magic_key.to_bytes(4))
+        # Rows and columns
+        self._fid.write(self._image_size[1].to_bytes(4))
+        self._fid.write(self._image_size[0].to_bytes(4))
+        # Data type and size
+        self.numpy_data_type_to_sio()
+        self._fid.write(self._data_type_code.to_bytes(4))
+        self._fid.write(self._data_size.to_bytes(4))
+        # User data
+        if self._include_sicd_metadata:
+            self._fid.write((1).to_bytes(4))                    # Num pairs of user data
+            self._fid.write((8).to_bytes(4))                    # Pair 1 name length
+            self._fid.write('SICDMETA'.encode('utf-8'))           # Pair 1 name
+            self._fid.write(len(XML_meta_string).to_bytes(4)) # Pair 1 value length
+            self._fid.write(XML_meta_string.encode('utf-8'))      # Pair 1 value
     
-end
+    def numpy_data_type_to_sio(self):
+        match self._data_type_str:
+            case 'int16':
+                self._data_type_code = 1
+                self._data_size = 2
+            case 'float32':
+                self._data_type_code = 3
+                self._data_size = 8
+            case 'complex64':
+                self._data_type_code = 13
+                self._data_size = 16
+            case _ : #Default if other cases don't match
+                raise TypeError('Writer only recognizes floats, complex and signed or unsigned integers')
+                
+    
 
 # //////////////////////////////////////////
 # /// CLASSIFICATION: UNCLASSIFIED       ///

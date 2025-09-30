@@ -28,10 +28,8 @@ from sarpy.io.general.base import SarpyIOError
 
 _unsupported_pix_size = 'Got unsupported sio data type/pixel size = `{}`'
 
-class FlatfileImageWriter (object) :
+class FlatfileImageWriter(object):
     
-    # Private/protected class data.  No public acess to these.  Their values
-    # are set on initialization.
     def __init__(
         # Input parameters that are required to define the structure of the
         # "flat" file to write.
@@ -39,32 +37,31 @@ class FlatfileImageWriter (object) :
         param_filename, 
         param_sicdmeta, 
         # Number of bytes to skip before writing data
-        param_header_skip: int = 20,        
-        param_data_type: str = 'complex64',    # "uint8", "float32", etc.
-        param_is_complex: bool = True,         # Boolean
-        
+        param_header_skip:       int = 20,        
+        # numpy data types. "uint8", "float32", etc.
+        param_data_type_str:     str = 'complex64', 
+        param_data_type_code:    int = 13,
+        param_is_complex:        bool = True,         # Boolean
         # Derived parameters computed for ease of use
         # Size of image in columns, rows (2-vector), derived from sicdmeta NumCols, NumRows
-        param_image_size: list = [],        
-        param_data_size: int = 100,            # Size of image data in bytes
+        param_image_size:        list = [],        
+        param_data_size:         int = 100,            # Size of image data in bytes
         # Data class of DATA_TYPE (so 'float32' becomes 'single'...)
-        param_buffer_type: str = 'complex64',
-        # If not passed in as parameter or found in sicdmeta, use this
-        param_default_data_type: str = 'float32'
+        param_buffer_type:       str = 'complex64',
     ):
         self._filename =  param_filename
         self._sicdmeta = param_sicdmeta
         self._header_skip = param_header_skip
-        self._data_type = param_data_type
+        self._data_type_str = param_data_type_str
+        self._data_type_code = param_data_type_code
         self._is_complex = param_is_complex
         self._image_size = [x + self._header_skip for x in param_image_size]
         self._data_size = param_data_size
         self._buffer_type = param_buffer_type
-        self._default_data_type = param_default_data_type
         
         if not os.path.exists(os.path.dirname(self._filename)):
             raise SarpyIOError('Path {} is not a file'.format(self._filename))
-        self._fid = open(self._filename, 'wb') 
+        self._fid = open(self._filename, 'wb') # We always write big-endian
         # Derived properties
         # SICDMETA must have, at a minimum, the number of rows and columns
         if isinstance(self._sicdmeta, SICDType):
@@ -74,11 +71,11 @@ class FlatfileImageWriter (object) :
                                 self._sicdmeta.ImageData.NumRows]
             if self._sicdmeta.ImageData is not None:
                 if self._sicdmeta.ImageData.PixelType == 'RE16I_IM16I':
-                    self._default_data_type = 'int16'
+                    self._data_type_str = 'int16'
                 elif self._sicdmeta.ImageData.PixelType == 'RE32F_IM32F':
-                    self._default_data_type = 'float32'
+                    self._data_type_str = 'float32'
                 elif self._sicdmeta.ImageData.PixelType == 'AMP8I_PHS8I':
-                    self._default_data_type = 'uint8'
+                    self._data_type_str = 'uint8'
                 else :
                     raise ValueError(_unsupported_pix_size.format(self._sicdmeta.ImageData.PixelType))
         
@@ -119,10 +116,7 @@ class FlatfileImageWriter (object) :
         ## Python doesn't write complex numbers directly, so we have to use struct
         if not isinstance(param_data, numpy.ndarray):
             raise TypeError('param_data must be a numpy array')
-        if self._is_complex:
-            data_interleaved = param_data.tobytes()
-        else:
-            data_interleaved = param_data
+        data_interleaved = param_data.tobytes()
         
         ## Need to seek to the correct location in the file before writing. 
         # Number of bytes for each pixel
