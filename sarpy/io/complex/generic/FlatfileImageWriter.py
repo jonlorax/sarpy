@@ -12,8 +12,9 @@
 # constructor with appropriate values, opens file, writes header, etc. and
 # a destructor that writes any footer info, closes file, etc.
 # 
-# Written by: Tom Krauss, NGA/IDT
-# Converted to Python by: Tex Peterson, 2025-09
+# Written by: Tex Peterson, 2025-09
+# Derived from MATLAB_SAR, Tom Krauss, NGA/IDT
+# 
 #
 # //////////////////////////////////////////
 # /// CLASSIFICATION: UNCLASSIFIED       ///
@@ -49,15 +50,15 @@ class FlatfileImageWriter(object):
         # Data class of DATA_TYPE (so 'float32' becomes 'single'...)
         param_buffer_type:       str = 'complex64',
     ):
-        self._filename =  param_filename
-        self._sicdmeta = param_sicdmeta
-        self._header_skip = param_header_skip
-        self._data_type_str = param_data_type_str
+        self._filename       =  param_filename
+        self._sicdmeta       = param_sicdmeta
+        self._header_skip    = param_header_skip
+        self._data_type_str  = param_data_type_str
         self._data_type_code = param_data_type_code
-        self._is_complex = param_is_complex
-        self._image_size = [x + self._header_skip for x in param_image_size]
-        self._data_size = param_data_size
-        self._buffer_type = param_buffer_type
+        self._is_complex     = param_is_complex
+        self._image_size     = [x + self._header_skip for x in param_image_size]
+        self._data_size      = param_data_size
+        self._buffer_type    = param_buffer_type
         
         if not os.path.exists(os.path.dirname(self._filename)):
             raise SarpyIOError('Path {} is not a file'.format(self._filename))
@@ -143,6 +144,9 @@ class FlatfileImageWriter(object):
             num_bytes_written = 0
         self._fid.flush
         return num_bytes_written
+    
+    def close(self):
+        self._fid.close()
 
 # //////////////////////////////////////////
 # /// CLASSIFICATION: UNCLASSIFIED       ///

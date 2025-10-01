@@ -3,7 +3,9 @@
 # data field called "SICDMETA" in the standard SIO file format.  The caller
 # can also turn off the user data, since not all SIO readers handle this.
 #
-# Written by: Tom Krauss, NGA/IDT
+# Written by: Tex Peterson
+# Written on: 2025-10
+# Derrived from MATLAB_SAR 
 #
 # //////////////////////////////////////////
 # /// CLASSIFICATION: UNCLASSIFIED       ///
