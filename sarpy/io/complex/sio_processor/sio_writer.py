@@ -1,7 +1,26 @@
-# SIOWriter is a class for writing SICD files using an SIO format.
-# The SICD metadata is written in a user data field called "SICDMETA" in the 
-# standard SIO file format. The caller can also turn off the user data, since 
-# not all SIO readers handle this.
+"""
+A class for writing SICD data in the Stream-oriented Input Output (SIO) format.
+
+SIO files have a 20 byte header, followed by the SICD meta data in the user data
+section, followed by the image data.
+
+The SICD metadata is written in a user data field called "SICDMETA" in the 
+standard SIO file format. The SICD metadata in xml format is prefixed with
+a Uniform Resource Name (urn) derived from the _SICD_SPEC_DETAILS and 
+_SICD_VERSION_DEFAULT located in sarpy.io.complex.sicd_elements.SICD.
+
+The caller can also turn off the user data, since not all SIO readers handle this.
+
+Usage:
+
+
+
+Args:
+
+Returns:
+
+"""
+
 #
 # Written by: Tex Peterson
 # Written on: 2025-10

@@ -16,7 +16,8 @@ import struct
 
 from sarpy.io.complex.sicd_elements.SICD import SICDType
 from sarpy.io.general.base import SarpyIOError
-from sarpy.io.complex.sicd_elements.SICD import _SICD_SPEC_DETAILS, _SICD_VERSION_DEFAULT
+from sarpy.io.complex.sicd_elements.SICD import _SICD_SPEC_DETAILS, \
+    _SICD_VERSION_DEFAULT
 from sarpy.io.complex.sicd_elements.ImageData import ImageDataType, FullImageType
 from sarpy.io.complex.sicd_elements.blocks import RowColType
 
@@ -105,12 +106,14 @@ class SIOReader(object):
                 raise TypeError('Writer only recognizes floats, complex and signed or unsigned integers')
             
     def sio_user_data_to_sarpy_format(self):
-        if self._user_data_xml.tag[-4:] == 'SICD':
-            self.sio_user_data_to_sicd_format()
+        if ((self._user_data_xml.tag[-4:] == 'SICD') or 
+            (self._user_data_xml.tag[-8:] == 'SICDMETA') or 
+            (self._user_data_xml.tag[-9:] == 'SICD_META')):
+            self.sio_user_data_to_sicd_format_current_version()
         elif self._user_data_xml.tag[-4:] == 'CPHD':
             self.sio_user_data_to_cphd_format()
 
-    def sio_user_data_to_sicd_format(self):
+    def sio_user_data_to_sicd_format_generic_version(self):
         # Initialize variables that will be set later.
         meta_data_number = 0
         NumRows = 0
@@ -125,6 +128,7 @@ class SIOReader(object):
         SCPPixelRow=0
         SCPPixelCol=0
         FullImage = False
+        # Process each  
         for elem in self._user_data_xml.iter():
             if elem.tag[-4:] == 'SICD':
                 print(_SICD_SPEC_DETAILS[_SICD_VERSION_DEFAULT]['namespace'] + '}SICD')
@@ -163,6 +167,63 @@ class SIOReader(object):
                     SCPPixelCol = int(elem.text)
             else:
                 print('break: ' + elem.tag)
+        localImageData=ImageDataType(
+        	NumRows=NumRows,
+            NumCols=NumCols,
+            PixelType=PixelType,
+            FirstRow=FirstRow,
+            FirstCol=FirstCol,
+            FullImage=FullImageType(
+                NumRows=FullImageNumRows,
+                NumCols=FullImageNumCols
+            ),
+            SCPPixel=RowColType(Row=SCPPixelRow , Col=SCPPixelCol)
+        )
+        self._sicdmeta = SICDType(ImageData=localImageData)
+        
+    def sio_user_data_to_sicd_format_current_version(self):
+        print('current version')
+        # Initialize variables that will be set later.
+        meta_data_number = 0
+        NumRows = 0
+        NumCols=0
+        PixelType=0
+        FirstRow=0
+        FirstCol=0
+        NumRows=0
+        NumCols=0
+        FullImageNumRows = 0 
+        FullImageNumCols = 0
+        SCPPixelRow=0
+        SCPPixelCol=0
+        # Define the Uniform Resource Names (URN)
+        urn = '{' + _SICD_SPEC_DETAILS[_SICD_VERSION_DEFAULT]['namespace'] + '}'
+        for image_data in self._user_data_xml.findall(urn+'ImageData'):
+            for xml_element in image_data:
+                if xml_element.tag == urn+'PixelType':
+                    PixelType = xml_element.text
+                elif xml_element.tag == urn+'NumRows':
+                    NumRows = xml_element.text                    
+                elif xml_element.tag == urn+'NumCols':
+                    NumCols = xml_element.text
+                elif xml_element.tag == urn+'FirstRow':
+                    FirstRow = xml_element.text
+                elif xml_element.tag == urn+'FirstCol':
+                    FirstCol = xml_element.text
+                elif xml_element.tag == urn+'FullImage':
+                    for sub_element in xml_element:
+                        if sub_element == urn+'NumRows':
+                            FullImageNumRows = sub_element.text
+                        elif sub_element == urn+'NumCols':
+                            FullImageNumCols = sub_element.text                
+                elif xml_element.tag == 'SCPPixel':
+                    for sub_element in xml_element:
+                        if sub_element.tag == 'Row':
+                            SCPPixelRow = sub_element.text
+                        elif sub_element.tag == 'Col':
+                            SCPPixelCol = sub_element.text
+                else:
+                    print('break: ' + xml_element.tag)
         localImageData=ImageDataType(
         	NumRows=NumRows,
             NumCols=NumCols,
