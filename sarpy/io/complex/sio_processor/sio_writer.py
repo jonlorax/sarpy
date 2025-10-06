@@ -1,33 +1,11 @@
-"""
-A class for writing SICD data in the Stream-oriented Input Output (SIO) format.
-
-SIO files have a 20 byte header, followed by the SICD meta data in the user data
-section, followed by the image data.
-
-The SICD metadata is written in a user data field called "SICDMETA" in the 
-standard SIO file format. The SICD metadata in xml format is prefixed with
-a Uniform Resource Name (urn) derived from the _SICD_SPEC_DETAILS and 
-_SICD_VERSION_DEFAULT located in sarpy.io.complex.sicd_elements.SICD.
-
-The caller can also turn off the user data, since not all SIO readers handle this.
-
-Usage:
-
-
-
-Args:
-
-Returns:
-
-"""
-
-#
-# Written by: Tex Peterson
-# Written on: 2025-10
-#
 # //////////////////////////////////////////
 # /// CLASSIFICATION: UNCLASSIFIED       ///
 # //////////////////////////////////////////
+# 
+# Written by: Tex Peterson
+# Written on: 2025-10
+#
+
 
 import numpy
 import os
@@ -36,6 +14,54 @@ from sarpy.io.complex.sicd_elements.SICD import SICDType
 from sarpy.io.general.base import SarpyIOError
 
 class SIOWriter(object):
+    """
+    A class for writing SICD data in the Stream-oriented Input Output (SIO) format.
+
+    SIO files have a 20 byte header, followed by the SICD meta data in the user data
+    section, followed by the image data.
+
+    The SICD metadata is written in a user data field called "SICDMETA" in the 
+    standard SIO file format. The SICD metadata in xml format is prefixed with
+    a Uniform Resource Name (urn) derived from the _SICD_SPEC_DETAILS and 
+    _SICD_VERSION_DEFAULT located in sarpy.io.complex.sicd_elements.SICD.
+
+    The caller can also turn off the user data, since not all SIO readers handle this.
+
+    Example:
+    # Given an image with SICD meta data, write both to an SIO formatted file.
+    # Within an interactive Python shell
+
+    import numpy as np
+    import struct
+
+    from sarpy.io.complex.sicd_elements.blocks import RowColType
+    from sarpy.io.complex.sicd_elements.SICD import SICDType
+    from sarpy.io.complex.sicd_elements.ImageData import ImageDataType, FullImageType
+    from sarpy.io.complex.sio_processor.sio_writer import SIOWriter as SIOWriter
+
+    example_image_data = np.arange(13*17*2, dtype=np.float32).reshape(13, 17,2)
+    example_sicd_meta_data = SICDType(
+        ImageData=ImageDataType(
+                NumRows=example_image_data.shape[0],
+                    NumCols=example_image_data.shape[1],
+                    PixelType="RE32F_IM32F",
+                    FirstRow=0,
+                    FirstCol=0,
+                    FullImage=FullImageType(
+                        NumRows=example_image_data.shape[0],
+                        NumCols=example_image_data.shape[1]
+                    ),
+                    SCPPixel=RowColType(Row=example_image_data.shape[0] // 2, Col=example_image_data.shape[1] // 2)
+            ),
+    )
+    output_file_name = "SIOWriterExampleOutput.sio"
+
+    my_sio_writer = SIOWriter(str(output_file_name), example_image_data, 
+        example_sicd_meta_data, param_start_indices=[0, 0])
+    my_sio_writer.write()
+    my_sio_writer.close()
+
+    """
     
     def __init__(
             self,
@@ -43,8 +69,36 @@ class SIOWriter(object):
             param_image_data:            numpy.array, 
             param_sicdmeta:              SICDType|None = None,
             param_start_indices:         list = [0, 0],
-            param_include_sicd_metadata: bool = True       # Boolean
+            param_include_sicd_metadata: bool = True
     ):
+        """
+        Parameters:
+
+        param_filename:
+            The path and filename to write the data to.
+
+        param_image_data:
+            The actual data that makes up the image stored as a numpy array.
+
+        param_sicdmeta:
+            SICD meta data in a SICDType object.
+
+        param_start_indices:
+            The indicices of the image data where you want to start writing from.
+            This is used to skip over unwanted parts of the image.
+
+        param_include_sicd_metadata: 
+            A boolean value used to indicate if the SICD metadata is to be 
+            included in the SIO file or not. This is used to prevent writing the
+            SICD meta data when you know you will ingest it later with another
+            reader that cannot process SICD data from an SIO file.
+            True: Write the SICD meta data to the SIO file
+            False: Do not write the SICD meta data to the SIO file.
+
+        Returns:
+        An SIOWriter object.
+
+        """
         # Parse inputs
         self._filename       = param_filename
         self._image_data     = param_image_data
@@ -53,9 +107,11 @@ class SIOWriter(object):
         self._start_indices  = param_start_indices
         self._include_sicd_metadata = param_include_sicd_metadata
         
-        self._header_skip = 5*4 # SIO header with no user data is 5 uint32 words
+        # The default SIO header is 20 bytes
+        # It is comprised of 5 uint32 words, which are 4 bytes
+        self._header_skip = 20
 
-        # Magic key
+        # Set the magic key and increase the _header_skip if there is user data.
         # We always write big-endian
         if self._sicdmeta is not None and self._include_sicd_metadata:
             self._header_skip = self._header_skip + 4 + 4 + 8 + 4 + \
@@ -66,14 +122,17 @@ class SIOWriter(object):
         self._image_shape    = self._image_data.shape
         
         # Data type and size
-        self.numpy_data_type_to_sio()
+        self._numpy_data_type_to_sio()
         
         if not os.path.exists(os.path.dirname(self._filename)):
             raise SarpyIOError('Path {} is not a file'.format(self._filename))
         self._fid = open(self._filename, 'wb')
         
     
-    def numpy_data_type_to_sio(self):
+    def _numpy_data_type_to_sio(self):
+        """
+        Private function: Given the numpy data type from the _image_data, set the data type code and size.
+        """
         match self._image_data.dtype:
             case 'int16':
                 self._data_type_code = 1
@@ -88,27 +147,38 @@ class SIOWriter(object):
                 raise TypeError('Writer only recognizes floats, complex and signed or unsigned integers')
                 
     def write(self):
-        # We'll use a fixed definition SIO header with (possibly) one user-data segment.
-        # The header will the look like this:
-        #    Core SIO header:
-        #       Magic key   (4 byte uint, fixed value of 'FF027FFD')
-        #       Rows        (4 byte uint)
-        #       Columns     (4 byte uint)
-        #       Data type   (4 byte uint)
-        #       Data size   (4 byte uint, # bytes per element)
-        #    Optional "user data":
-        #       Num pairs   (4 byte uint, # pairs of user data, fixed at 1)
-        #       Name bytes  (4 byte uint, # bytes in name of user element,
-        #                    fixed at 8 for name "SICDMETA")
-        #       Name        (8 bytes containing "SICDMETA")
-        #       Value bytes (4 byte uint, value is length of XML string)
-        #       Value       (XML string holding SICD metadata)
+        """
+        Write _image_data and meta data to the file indicated by _filename
         
+        Fixed definition SIO header with (possibly) one user-data segment.
+        Header will the look like this:
+            Core SIO header:
+               Magic key   (4 byte uint, either 0xFF027FFD or 0xFF017FFE)
+               Rows        (4 byte uint)
+               Columns     (4 byte uint)
+               Data type   (4 byte uint)
+               Data size   (4 byte uint, # bytes per element)
+            Optional "user data":
+               Num pairs   (4 byte uint, # pairs of user data, fixed at 1)
+               Name bytes  (4 byte uint, # bytes in name of user element,
+                            fixed at 8 for name "SICDMETA")
+               Name        (8 bytes containing "SICDMETA")
+               Value bytes (4 byte uint, value is length of XML string)
+               Value       (XML string holding SICD metadata)
 
+        Parameters:
+            None
+
+        Returns:
+            The number of bytes written to file.
+        """
+
+        # Write the header in order as defined above.
         self._fid.write(self._magic_key.to_bytes(4))
         # Rows and columns
         self._fid.write(self._image_shape[0].to_bytes(4))
         self._fid.write(self._image_shape[1].to_bytes(4))
+        # Data type information
         self._fid.write(self._data_type_code.to_bytes(4))
         self._fid.write(self._data_size.to_bytes(4))
         # User data
@@ -124,6 +194,9 @@ class SIOWriter(object):
         return num_bytes_written
     
     def close(self):
+        """
+        Close the file we opened to write to.
+        """
         self._fid.close()
 
 # //////////////////////////////////////////
