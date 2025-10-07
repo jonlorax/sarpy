@@ -6,18 +6,11 @@
 # Written on: 2025-10
 #
 
-import io
 import numpy
 import os
-from xml.etree import ElementTree
 
 from sarpy.io.complex.sicd_elements.SICD import SICDType
-from sarpy.io.complex.sicd import SICDReader
 from sarpy.io.general.base import SarpyIOError
-from sarpy.io.complex.sicd_elements.SICD import _SICD_SPEC_DETAILS, \
-    _SICD_VERSION_DEFAULT
-from sarpy.io.complex.sicd_elements.ImageData import ImageDataType, FullImageType
-from sarpy.io.complex.sicd_elements.blocks import RowColType
 
 class SIOReader(object):
     """
@@ -98,8 +91,7 @@ class SIOReader(object):
                 self._user_data_name = self._fid.read(user_data_name_bytes).decode("utf-8")
                 self._user_data_size  = int.from_bytes(self._fid.read(4))
                 self._user_data    = self._fid.read(self._user_data_size).decode("utf-8")
-                self._user_data_xml = ElementTree.fromstring(self._user_data)
-                self._sio_user_data_to_sarpy_format()
+                self._sicdmeta = SICDType.from_xml_string(self._user_data)
                 self._image_data  = numpy.frombuffer(self._fid.read(), 
                                                      dtype=self._data_type_str).reshape(self._rows, self._columns,2)
             case 0xFD7F02FF:
@@ -117,8 +109,7 @@ class SIOReader(object):
                 self._user_data_name = self._fid.read(user_data_name_bytes).decode("utf-8")
                 self._user_data_size  = int.from_bytes(self._fid.read(4))
                 self._user_data    = self._fid.read(self._user_data_size).decode("utf-8")
-                self._user_data_xml = ElementTree.fromstring(self._user_data)
-                self._sio_user_data_to_sarpy_format()
+                self._sicdmeta = SICDType.from_xml_string(self._user_data)
                 temp_image_data   = self._fid.read()
                 # Reverse the bytes ingested from little endian to big
                 self._image_data  = numpy.frombuffer(temp_image_data[::-1], 
@@ -139,151 +130,8 @@ class SIOReader(object):
                 self._data_type_str = 'complex64'
                 self._data_size = 16
             case _ : #Default if other cases don't match
-                raise TypeError('Writer only recognizes floats, complex and signed or unsigned integers')
-            
-    def _sio_user_data_to_sarpy_format(self):
-        if ((self._user_data_xml.tag[-4:] == 'SICD') or 
-            (self._user_data_xml.tag[-8:] == 'SICDMETA') or 
-            (self._user_data_xml.tag[-9:] == 'SICD_META')):
-            self._sio_user_data_to_sicd_format_current_version()
-        elif self._user_data_xml.tag[-4:] == 'CPHD':
-            self._sio_user_data_to_cphd_format()
-
-    def _sio_user_data_to_sicd_format_short_version(self):
-        reader = SICDReader(io.BytesIO(self._user_data.encode('utf-8')))
-        self._sicdmeta = reader.sicd_meta[0]
-
-    def _sio_user_data_to_sicd_format_generic_version(self):
-        # Initialize variables that will be set later.
-        meta_data_number = 0
-        NumRows = 0
-        NumCols=0
-        PixelType=0
-        FirstRow=0
-        FirstCol=0
-        NumRows=0
-        NumCols=0
-        FullImageNumRows = 0 
-        FullImageNumCols = 0
-        SCPPixelRow=0
-        SCPPixelCol=0
-        FullImage = False
-        # Process each  
-        for elem in self._user_data_xml.iter():
-            if elem.tag[-4:] == 'SICD':
-                print(_SICD_SPEC_DETAILS[_SICD_VERSION_DEFAULT]['namespace'] + '}SICD')
-                if meta_data_number > 0: # We only process the first SICD meta data
-                    break
-                else:
-                    meta_data_number += 1
-            elif elem.tag[-9:] == 'ImageData':
-                print(_SICD_SPEC_DETAILS[_SICD_VERSION_DEFAULT]['namespace'] + '}ImageData')
-            elif elem.tag[-9:] == 'PixelType':
-                PixelType = elem.text
-            elif elem.tag[-7:] == 'NumRows':
-                if FullImage:
-                    FullImageNumRows = elem.text
-                else:
-                    NumRows = elem.text
-            elif elem.tag[-7:] == 'NumCols':
-                if FullImage:
-                    FullImageNumCols = elem.text
-                    FullImage = False
-                else:
-                    NumCols = elem.text
-            elif elem.tag[-8:] == 'FirstRow':
-                FirstRow = elem.text
-            elif elem.tag[-8:] == 'FirstCol':
-                FirstCol = elem.text
-            elif elem.tag[-9:] == 'FullImage':
-                FullImage = True
-            elif elem.tag[-8:] == 'SCPPixel':
-                SCPPixel = True
-            elif elem.tag[-3:] == 'Row':
-                if SCPPixel:
-                    SCPPixelRow = elem.text
-            elif elem.tag[-3:] == 'Col':
-                if SCPPixel:
-                    SCPPixelCol = int(elem.text)
-            else:
-                print('break: ' + elem.tag)
-        localImageData=ImageDataType(
-        	NumRows=NumRows,
-            NumCols=NumCols,
-            PixelType=PixelType,
-            FirstRow=FirstRow,
-            FirstCol=FirstCol,
-            FullImage=FullImageType(
-                NumRows=FullImageNumRows,
-                NumCols=FullImageNumCols
-            ),
-            SCPPixel=RowColType(Row=SCPPixelRow , Col=SCPPixelCol)
-        )
-        self._sicdmeta = SICDType(ImageData=localImageData)
-        
-    def _sio_user_data_to_sicd_format_current_version(self):
-        """
-        Parse the SICD meta data XML object to create the SICDType meta data object
-        """
-        # Initialize variables that will be set later.
-        NumRows = 0
-        NumCols=0
-        PixelType=0
-        FirstRow=0
-        FirstCol=0
-        NumRows=0
-        NumCols=0
-        FullImageNumRows = 0 
-        FullImageNumCols = 0
-        SCPPixelRow=0
-        SCPPixelCol=0
-        # Define the Uniform Resource Names (URN)
-        urn = '{' + _SICD_SPEC_DETAILS[_SICD_VERSION_DEFAULT]['namespace'] + '}'
-        for image_data in self._user_data_xml.findall(urn+'ImageData'):
-            for xml_element in image_data:
-                if xml_element.tag == urn+'PixelType':
-                    PixelType = xml_element.text
-                elif xml_element.tag == urn+'NumRows':
-                    NumRows = xml_element.text                    
-                elif xml_element.tag == urn+'NumCols':
-                    NumCols = xml_element.text
-                elif xml_element.tag == urn+'FirstRow':
-                    FirstRow = xml_element.text
-                elif xml_element.tag == urn+'FirstCol':
-                    FirstCol = xml_element.text
-                elif xml_element.tag == urn+'FullImage':
-                    for sub_element in xml_element:
-                        if sub_element == urn+'NumRows':
-                            FullImageNumRows = sub_element.text
-                        elif sub_element == urn+'NumCols':
-                            FullImageNumCols = sub_element.text                
-                elif xml_element.tag == urn+'SCPPixel':
-                    for sub_element in xml_element:
-                        if sub_element.tag == urn+'Row':
-                            SCPPixelRow = sub_element.text
-                        elif sub_element.tag == urn+'Col':
-                            SCPPixelCol = sub_element.text
-                else:
-                    print('break: ' + xml_element.tag)
-        localImageData=ImageDataType(
-        	NumRows=NumRows,
-            NumCols=NumCols,
-            PixelType=PixelType,
-            FirstRow=FirstRow,
-            FirstCol=FirstCol,
-            FullImage=FullImageType(
-                NumRows=FullImageNumRows,
-                NumCols=FullImageNumCols
-            ),
-            SCPPixel=RowColType(Row=SCPPixelRow , Col=SCPPixelCol)
-        )
-        self._sicdmeta = SICDType(ImageData=localImageData)
-        
-    def _sio_user_data_to_cphd_format(self):
-        raise NotImplementedError
-                
-
-
+                raise TypeError('Writer only recognizes floats, complex and signed or unsigned integers')        
+    
 # //////////////////////////////////////////
 # /// CLASSIFICATION: UNCLASSIFIED       ///
 # //////////////////////////////////////////

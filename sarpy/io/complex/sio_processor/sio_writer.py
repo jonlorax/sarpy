@@ -60,7 +60,6 @@ class SIOWriter(object):
         example_sicd_meta_data, param_start_indices=[0, 0])
     my_sio_writer.write()
     my_sio_writer.close()
-
     """
     
     def __init__(
@@ -97,7 +96,6 @@ class SIOWriter(object):
 
         Returns:
         An SIOWriter object.
-
         """
         # Parse inputs
         self._filename       = param_filename
