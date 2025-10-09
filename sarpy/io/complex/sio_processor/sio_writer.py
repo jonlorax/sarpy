@@ -55,7 +55,7 @@ class SIOWriter(object):
     output_file_name = "SIOWriterExampleOutput.sio"
 
     my_sio_writer = SIOWriter(str(output_file_name), example_image_data, 
-        example_sicd_meta_data, param_start_indices=[0, 0])
+        example_sicd_meta_data)
     my_sio_writer.write()
     my_sio_writer.close()
     """
@@ -65,7 +65,6 @@ class SIOWriter(object):
             param_filename:              str, 
             param_image_data:            numpy.array, 
             param_sicdmeta:              SICDType|None = None,
-            param_start_indices:         list          = [0, 0],
             param_include_sicd_metadata: bool          = True
     ):
         """
@@ -79,10 +78,6 @@ class SIOWriter(object):
 
         param_sicdmeta:
             SICD meta data in a SICDType object.
-
-        param_start_indices:
-            The indicices of the image data where you want to start writing from.
-            This is used to skip over unwanted parts of the image.
 
         param_include_sicd_metadata: 
             A boolean value used to indicate if the SICD metadata is to be 
@@ -102,7 +97,6 @@ class SIOWriter(object):
             self._sicdmeta_xml_bytes = param_sicdmeta.to_xml_bytes()
         else:
             self._sicdmeta_xml_bytes = None
-        self._start_indices          = param_start_indices
         self._include_sicd_metadata  = param_include_sicd_metadata
         
         # The default SIO header is 20 bytes

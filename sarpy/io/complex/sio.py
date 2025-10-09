@@ -25,7 +25,7 @@ from sarpy.io.complex.sicd import AmpLookupFunction
 
 from sarpy.io.general.base import BaseWriter, SarpyIOError
 from sarpy.io.general.data_segment import NumpyArraySegment, NumpyMemmapSegment
-from sarpy.io.general.format_function import ComplexFormatFunction, FormatFunction
+from sarpy.io.general.format_function import ComplexFormatFunction
 from sarpy.io.general.utils import is_file_like, is_real_file
 from sarpy.io.xml.base import parse_xml_from_string
 
@@ -60,24 +60,15 @@ class SIODetails(object):
         if not os.path.isfile(file_name):
             raise SarpyIOError('Path {} is not a file'.format(file_name))
 
-        # Note, the first 20 bytes of an SIO file make up the header.
-        # This section of code inturprets that header information.
         with open(file_name, 'rb') as fi:
-            # Get the first 4 bytes from the file as a big endian, unsigned int.
             self._magic_number = struct.unpack(">I", fi.read(4))[0]
-            # Convert the first four bytes from the file into an endian indicator 
-            # for the contents of the rest of the file.
             endian = self.ENDIAN.get(self._magic_number, None)
             if endian is None:
                 raise SarpyIOError(
                     'File {} is not an SIO file. Got magic number {}'.format(file_name, self._magic_number))
 
             # reader basic header - (rows, columns, data_type, pixel_size)?
-            # Get the next 16 bytes from the file.
-            # init_head = numpy.array(struct.unpack('{}4I'.format(endian), fi.read(16)), dtype=numpy.uint64)
-            # The 20 byte header is always ">I"
-            init_head = numpy.array(struct.unpack(">I", fi.read(16)), 
-                                    dtype=numpy.uint64)
+            init_head = numpy.array(struct.unpack('{}4I'.format(endian), fi.read(16)), dtype=numpy.uint64)
             if not (numpy.all(init_head[2:] == numpy.array([13, 8]))
                     or numpy.all(init_head[2:] == numpy.array([12, 4]))
                     or numpy.all(init_head[2:] == numpy.array([11, 2]))):
@@ -390,8 +381,7 @@ class SIOWriter(BaseWriter):
             sicd_meta: SICDType,
             user_data: Optional[Dict[str, str]] = None,
             check_older_version: bool = False,
-            check_existence: bool = True,
-            input_data_type: str = 'complex64'):
+            check_existence: bool = True):
         """
 
         Parameters
@@ -404,11 +394,6 @@ class SIOWriter(BaseWriter):
             application compliance issues?
         check_existence : bool
             Should we check if the given file already exists, and raises an exception if so?
-        input_data_type: str = 'complex64'
-            The initial version of this function assumed that we were dealing 
-            with complex64 data types. This variable allows us to account for
-            other data type possibilities while maintaining backwards 
-            compatibility.
         """
 
         self._data_written = True
@@ -433,17 +418,15 @@ class SIOWriter(BaseWriter):
         # choose magic number (with user data) and corresponding endian-ness
         magic_number = 0xFD7F02FF
         endian = SIODetails.ENDIAN[magic_number]
-        
+
         # define basic image details
         raw_shape = (sicd_meta.ImageData.NumRows, sicd_meta.ImageData.NumCols, 2)
         pixel_type = sicd_meta.ImageData.PixelType
-        format_function = None
         if pixel_type == 'RE32F_IM32F':
             raw_dtype = numpy.dtype('{}f4'.format(endian))
             element_type = 13
             element_size = 8
-            if input_data_type == 'complex64' :
-                format_function = ComplexFormatFunction(raw_dtype, order='IQ', band_dimension=2)
+            format_function = ComplexFormatFunction(raw_dtype, order='IQ', band_dimension=2)
         elif pixel_type == 'RE16I_IM16I':
             raw_dtype = numpy.dtype('{}i2'.format(endian))
             element_type = 12
@@ -485,21 +468,10 @@ class SIOWriter(BaseWriter):
             data_segment = NumpyArraySegment(
                 underlying_array, 'complex64', raw_shape[:2], format_function=format_function, mode='w')
             self._data_written = False
-        elif input_data_type == numpy.dtype('complex64'):
+        else:
             data_segment = NumpyMemmapSegment(
                 self._file_name, self._data_offset, raw_dtype, raw_shape,
                 'complex64', raw_shape[:2], format_function=format_function, mode='w', close_file=False)
-            self._data_written = True
-        else:
-            # Case for datatypes that are not complex64. 
-            # Create a numpy memmap to write data to a file.
-            memmap = numpy.memmap(
-                self._file_name, dtype=input_data_type,
-                mode='r+', shape=raw_shape) 
-            # Use the numpy memmap as the base for the custom NumpyArraySegment.
-            data_segment = NumpyArraySegment(memmap, 
-                                             formatted_dtype=input_data_type, 
-                                             mode='w')
             self._data_written = True
         BaseWriter.__init__(self, data_segment)
 

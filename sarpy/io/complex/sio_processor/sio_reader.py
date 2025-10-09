@@ -57,6 +57,7 @@ class SIOReader(object):
         self._sio_code_to_numpy_data_type()
         self._data_size          = int.from_bytes(self._fid.read(4))
         self._user_data          = None
+        self._sicdmeta           = None
         # Magic Key indicates there is SICD meta data in the user data
         if self._magic_key in [0xFF027FFD, 0xFD7F02FF]:
             # SICD meta data header format:
