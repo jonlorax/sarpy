@@ -368,3 +368,41 @@ class Test_base_functions(unittest.TestCase):
     def test_parse_complex_value_param_is_list_non_int_success(self):
         with self.assertRaisesRegex(TypeError, r"complex\(\) first argument must be a string or a number, not 'list'"):
             assert(base.parse_complex([3.5], "Bob", "base") == 1)
+
+    # ********************
+    # parse_datetime tests
+    # ********************
+    def test_parse_datetime_no_params_fail(self):
+        with self.assertRaisesRegex(TypeError, r"parse_datetime\(\) missing 3 required positional arguments: 'value', 'name', and 'instance'$"):
+            base.parse_datetime()
+        
+    def test_parse_datetime_value_param_only_fail(self):
+        with self.assertRaisesRegex(TypeError, r"parse_datetime\(\) missing 2 required positional arguments: 'name' and 'instance'$"):
+            base.parse_datetime("Test")
+
+    def test_parse_datetime_missing_instance_param_fail(self):
+        with self.assertRaisesRegex(TypeError, r"parse_datetime\(\) missing 1 required positional argument: 'instance'$"):
+            base.parse_datetime("Test", "Bob")
+
+    def test_parse_datetime_value_param_is_None_success(self):
+        assert(base.parse_datetime(None, "Bob", "base") == None)
+
+    def test_parse_datetime_value_param_is_datetime_success(self):
+        test_datetime = np.datetime64('1914-05-17')
+        assert(base.parse_datetime(test_datetime, "Bob", "base") == test_datetime)
+
+    def test_parse_datetime_value_param_is_string_success(self):
+        test_datetime = np.datetime64('1914-05-17')
+        assert(base.parse_datetime('1914-05-17', "Bob", "base") == test_datetime)
+
+    def test_parse_datetime_value_param_is_xml_success(self):
+        test_datetime = np.datetime64('1939-10-27')
+        assert(base.parse_datetime(self.actor_root[0][3], "Bob", "base") == test_datetime)
+
+    def test_parse_datetime_value_param_is_string_non_date_fail(self):
+        with self.assertRaisesRegex(ValueError, r'Error parsing datetime string "Bob" at position 0'):
+            assert(base.parse_datetime('Bob', "Bob", "base") == 1)
+
+    def test_parse_datetime_value_param_is_list_non_int_success(self):
+        with self.assertRaisesRegex(TypeError, r"Field Bob for class str expects datetime convertible input, and got <class 'list'>"):
+            assert(base.parse_datetime([3.5], "Bob", "base") == 1)

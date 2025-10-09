@@ -508,9 +508,8 @@ def parse_complex(value, name, instance):
     value : ElementTree.Element|None|complex|dict
         The ElementTree.Element entity that you want to get the value from.
         None returns None.
-        Float returns a float.
-        A string value will return the float value for the string if it can be 
-        converted to a float.
+        complex returns a complex.
+        dict is a dictionary representation of a complex number.
     name : str 
         Name of the field to return the value of. This is only used in the 
         raised error message
@@ -520,7 +519,7 @@ def parse_complex(value, name, instance):
     Returns
     -------
     None | bool
-        Returns None if value passed is None. Returns the float value
+        Returns None if value passed is None. Returns the complex value
         of a node when passed an ElementTree.Element
 
     Raises
@@ -574,6 +573,36 @@ def parse_complex(value, name, instance):
 
 
 def parse_datetime(value, name, instance, units='us'):
+    """
+    The parse_datetime function is a helper function specifically for parsing 
+    datetime values within XML elements in sarpy.io.xml.base. 
+    The function is not intended for public use. This function is recursive.
+    
+    Parameters
+    ----------
+    value : ElementTree.Element|None|datetime|dict
+        The ElementTree.Element entity that you want to get the value from.
+        None returns None.
+        datetime returns a datetime.
+        A string value will return the datetime value for the string if it can be 
+        converted to a datetime.
+    name : str 
+        Name of the field to return the value of. This is only used in the 
+        raised error message
+    instance :
+        The class of the variable. This is only used in the raised error message.
+
+    Returns
+    -------
+    None | bool
+        Returns None if value passed is None. Returns the float value
+        of a node when passed an ElementTree.Element
+
+    Raises
+    -------
+    TypeError
+        When passed a value with a type other than the expected input types.
+    """
     if value is None:
         return None
     if isinstance(value, numpy.datetime64):
