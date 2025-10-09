@@ -116,6 +116,19 @@ class Test_verify_slice(TestCase):
                                             "slice limited by `3`")):
             verify_slice([-6, 3, 1], 3)
 
+    def testSliceItemPoorlyFormedFail(self):
+        with self.assertRaisesRegex(ValueError, 
+                                    re.escape(
+                                        "slice slice(-6, 3, 1) is not well formed")):
+            verify_slice([-6, 3, 1], 100)
+    
+    def testBadValueFail(self):
+        with self.assertRaisesRegex(ValueError, 
+                                    re.escape(
+                                        "Got unexpected argument of type " + \
+                                            "<class 'dict'> in slice")):
+            verify_slice({'key': 'Bad Info', 'Value': 'Not a number'}, self.max_element)
+
 class Test_verify_subscript(TestCase):
     def setUp(self):
         self.item = [1, 60, 3]
