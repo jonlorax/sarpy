@@ -2696,6 +2696,7 @@ class SubheaderManager(object):
         if self._item_size is None or self.item_size != len(value):
             self.item_size = len(value)
         
+
     @property
     def item_written(self) -> bool:
         """
