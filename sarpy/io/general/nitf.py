@@ -2692,13 +2692,10 @@ class SubheaderManager(object):
             raise ValueError(
                 'item_bytes input has size {},\n\t'
                 'but item_size has been defined as {}.'.format(len(value), self._item_size))
-        print('1st item bytes setter bytes = ' + str(self._item_bytes) + ' item_size = ' + str(self.item_size))
         self._item_bytes = value
-        print('2nd item bytes setter bytes = ' + str(self._item_bytes) + ' item_size = ' + str(self.item_size))
         if self._item_size is None or self.item_size != len(value):
             self.item_size = len(value)
-        print('3rd item bytes setter bytes = ' + str(self._item_bytes) + ' item_size = ' + str(self.item_size))
-
+        
     @property
     def item_written(self) -> bool:
         """
@@ -2800,13 +2797,11 @@ class ImageSubheaderManager(SubheaderManager):
 
     @item_size.setter
     def item_size(self, value):
-        print('in Image Subheader Manager item_size setter. ' + str(self._item_size))
         if self._item_size is not None:
             logger.warning("item_size is read only after being initially defined.")
             return
         if self.subheader.mask_subheader is None:
             self._item_size = int(value)
-            print('in Image Subheader Manager item_size setter mask if .' + str(self._item_size))
         else:
             self._item_size = int(value) + self.subheader.mask_subheader.get_bytes_length()
 
@@ -4130,24 +4125,19 @@ class NITFWriter(BaseWriter):
         return out
 
     def flush(self, force: bool = False) -> None:
-        print('start flush')
         self._validate_closed()
         BaseWriter.flush(self, force=force)
         try:
             if self._in_memory:
                 if self._image_segment_data_segments is not None:
                     for index, entry in enumerate(self._image_segment_data_segments):
-                        print("index: " + str(index))
                         manager = self.nitf_writing_details.image_managers[index]
                         if manager.item_written:
                             continue
                         if manager.item_bytes is not None:
                             continue
                         if force or entry.check_fully_written(warn=force):
-                            print('Pre set item_bytes from ' + str(manager.item_bytes)
-                                  + ' to ' + str(entry.get_raw_bytes(warn=False)))
                             manager.item_bytes = entry.get_raw_bytes(warn=False)
-                            print('Post set item_bytes')
 
             check = self.nitf_writing_details.verify_all_offsets(require=False)
             if check:
