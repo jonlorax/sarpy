@@ -54,8 +54,6 @@ class SIOReader(object):
         byte_order = 'big'
         if self._magic_key in [0xFE7F01FF, 0xFD7F02FF]:
             byte_order = 'little'
-        self._magic_key = int.from_bytes(self._magic_key, byteorder=byte_order)
-        # After converting to big endian, use big endian processing. 
         self._rows               = int.from_bytes(self._fid.read(4), byteorder=byte_order)
         self._columns            = int.from_bytes(self._fid.read(4), byteorder=byte_order)
         self._data_type_code     = int.from_bytes(self._fid.read(4), byteorder=byte_order)
