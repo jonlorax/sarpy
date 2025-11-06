@@ -107,14 +107,11 @@ class SIOReader(object):
         """
         match self._data_type_code:
             case 1:
-                self._data_type_str = 'int16'
-                self._data_size     = 2
+                self._data_type_str = 'i2'
             case 3:
-                self._data_type_str = 'float32'
-                self._data_size     = 8
+                self._data_type_str = 'f4'
             case 13:
-                self._data_type_str = 'complex64'
-                self._data_size     = 16
+                self._data_type_str = 'c8'
             case _ : #Default if other cases don't match
                 raise TypeError('Writer only recognizes floats, complex and ' + \
                                 'signed or unsigned integers')        
