@@ -61,6 +61,8 @@ class SIOReader(object):
         self._sio_code_to_numpy_data_type()
         if byte_order == 'little':
             self._data_type_str = '<' + self._data_type_str
+        else:
+            self._data_type_str = '>' + self._data_type_str
         self._data_size          = int.from_bytes(self._fid.read(4), byteorder=byte_order)
         self._user_data          = None
         self._sicdmeta           = None
