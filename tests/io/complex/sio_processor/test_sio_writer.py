@@ -77,4 +77,4 @@ class test_sio_writer(TestCase):
         sio_writer.close()
         sio_reader = SIOReader(output_sio_writer_32)
         assert_array_equal(sio_reader._image_data, image_data)
-        self.assertEqual(sio_reader._sicdmeta, sicd_meta_real_32)
+        self.assertEqual(sio_reader._sicdmeta.to_xml_string(), sicd_meta_real_32.to_xml_string())
