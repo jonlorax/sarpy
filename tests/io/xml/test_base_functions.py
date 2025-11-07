@@ -584,11 +584,11 @@ class TestParseComplex(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, r"Cannot convert dict {'real': 4, 'imag': None} to a complex number for field Bob of class str."):
             base.parse_complex({"real":4, "imag":None}, "Bob", "base")
 
-    def test_parse_complex_value_param_is_string_non_int_success(self):
+    def test_parse_complex_value_param_is_string_non_int_fail(self):
         with self.assertRaisesRegex(ValueError, r"complex\(\) arg is a malformed string"):
             base.parse_complex('Bob', "Bob", "base")
 
-    def test_parse_complex_value_param_is_list_non_int_success(self):
+    def test_parse_complex_value_param_is_list_non_int_fail(self):
         with self.assertRaisesRegex(TypeError, r"complex\(\) first argument must be a string or a number, not 'list'"):
             base.parse_complex([3.5], "Bob", "base")
 
