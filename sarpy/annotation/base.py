@@ -5,13 +5,12 @@ Base annotation types for general use - based on the geojson implementation
 __classification__ = "UNCLASSIFIED"
 __author__ = "Thomas McCullough"
 
+from collections import OrderedDict
+import json
 import logging
 import os
-from uuid import uuid4
 from typing import Optional, Dict, List, Any, Union
-import json
-
-from collections import OrderedDict
+from uuid import uuid4
 
 from sarpy.geometry.geometry_elements import Jsonable, FeatureCollection, Feature, \
     GeometryCollection, GeometryObject, Geometry, basic_assemble_from_collection
@@ -92,6 +91,8 @@ class GeometryProperties(Jsonable):
         """
 
         typ = the_json['type']
+        if "type" not in the_json.keys():
+            raise ValueError("the json requires the field 'type'")
         if typ != cls._type:
             raise ValueError('GeometryProperties cannot be constructed from {}'.format(the_json))
         return cls(
@@ -168,7 +169,7 @@ class AnnotationProperties(Jsonable):
         if value is None or isinstance(value, str):
             self._name = value
         else:
-            raise TypeError('Got unexpected type for name')
+            raise TypeError(f'Got unexpected value of type {type(value)} for name')
 
     @property
     def description(self):
@@ -182,7 +183,7 @@ class AnnotationProperties(Jsonable):
         if value is None or isinstance(value, str):
             self._description = value
         else:
-            raise TypeError('Got unexpected type for description')
+            raise TypeError(f'Got unexpected value of type {type(value)} for description')
 
     @property
     def directory(self):
@@ -198,7 +199,7 @@ class AnnotationProperties(Jsonable):
             return
 
         if not isinstance(value, str):
-            raise TypeError('Got unexpected type for directory')
+            raise TypeError(f'Got unexpected value of type {type(value)} for directory')
 
         parts = [entry.strip() for entry in value.split('/')]
         self._directory = '/'.join([entry for entry in parts if entry != ''])
@@ -218,7 +219,7 @@ class AnnotationProperties(Jsonable):
             self._geometry_properties = []
             return
         if not isinstance(value, list):
-            raise TypeError('Got unexpected value for geometry properties')
+            raise TypeError(f'Got unexpected value of type {type(value)} for geometry properties')
 
         self._geometry_properties = []
         for entry in value:
@@ -242,7 +243,8 @@ class AnnotationProperties(Jsonable):
             entry = GeometryProperties.from_dict(entry)
 
         if not isinstance(entry, GeometryProperties):
-            raise TypeError('Got entry of unexpected type for geometry properties list')
+            raise TypeError(f'Got unexpected value of type {type(entry)} for geometry properties')
+
         self._geometry_properties.append(entry)
 
     def get_geometry_property(self, item):
@@ -303,7 +305,7 @@ class AnnotationProperties(Jsonable):
         if value is None or isinstance(value, Jsonable):
             self._parameters = value
         else:
-            raise TypeError('Got unexpected type for parameters')
+            raise TypeError(f'Got unexpected value of type {type(value)} for parameters')
 
     @classmethod
     def from_dict(cls, the_json):
@@ -322,6 +324,7 @@ class AnnotationProperties(Jsonable):
         typ = the_json['type']
         if typ != cls._type:
             raise ValueError('AnnotationProperties cannot be constructed from {}'.format(the_json))
+      
         return cls(
             name=the_json.get('name', None),
             description=the_json.get('description', None),
