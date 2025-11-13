@@ -184,7 +184,8 @@ class test_annotationproperties(unittest.TestCase):
         self.assertIsInstance(obj.parameters, Jsonable)
     
     def test_annotation_properties_invalid_name(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError, 
+                            match = re.escape("Got unexpected value of type <class 'int'> for name")):
             obj = AnnotationProperties(
             name = 1234,
             description = "abcd",
@@ -192,10 +193,10 @@ class test_annotationproperties(unittest.TestCase):
             geometry_properties = [self.geometryproperties_obj],
             parameters = Jsonable()
         )
-            raise TypeError("Got unexpected value of type <class 'int'> for name")
 
     def test_annotationproperties_invalid_description(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError, 
+                            match = re.escape("Got unexpected value of type <class 'int'> for description")):
             obj = AnnotationProperties(
                 name = "annotation1",
                 description = 1234,
@@ -203,11 +204,10 @@ class test_annotationproperties(unittest.TestCase):
                 geometry_properties = [self.geometryproperties_obj],
                 parameters = Jsonable()
             )
-
-            raise TypeError("Got unexpected value of type <class 'int'> for description")
         
     def test_annotationproperties_invalid_directory(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError, 
+                            match = re.escape("Got unexpected value of type <class 'int'> for directory")):
             obj = AnnotationProperties(
                 name = "annotation1",
                 description = "abcd",
@@ -215,11 +215,10 @@ class test_annotationproperties(unittest.TestCase):
                 geometry_properties = [self.geometryproperties_obj],
                 parameters = Jsonable()
             )
-
-            raise TypeError("Got unexpected value of type <class 'int'> for directory")
     
     def test_annotationproperties_invalid_geometry(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError, 
+                            match = re.escape("Got unexpected value of type <class 'str'> for geometry")):
             obj = AnnotationProperties(
                 name = "annotation1",
                 description = "abcd",
@@ -228,9 +227,9 @@ class test_annotationproperties(unittest.TestCase):
                 parameters = Jsonable()
             )
 
-            raise TypeError("Got unexpected value of type <class 'str'> for geometry")
     def test_annotationproperties_invalid_properties(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError, 
+                            match = re.escape("Got unexpected value of type <class 'str'> for parameters")):
             obj = AnnotationProperties(
                 name = "annotation1",
                 description = "abcd",
@@ -238,8 +237,6 @@ class test_annotationproperties(unittest.TestCase):
                 geometry_properties = [self.geometryproperties_obj],
                 parameters = "abcd"
             )
-
-            raise TypeError("Got unexpected value of type <class 'str'> for properties")
 
     def test_annotationproperties_get_property_and_index_by_index(self):
         property, index = self.annotation_properties_obj.get_geometry_property_and_index(0)
@@ -254,9 +251,9 @@ class test_annotationproperties(unittest.TestCase):
         self.assertEqual(index, 0)
         
     def test_annotationproperties_get_property_and_index_invalid_key(self):
-        with self.assertRaises(KeyError):
-            property, index = self.annotation_properties_obj.get_geometry_property_and_index(3.14)
-            raise KeyError('Got unrecognized geometry key `3.14`')
+        with pytest.raises(KeyError, 
+                            match = re.escape("Got unrecognized geometry key `3.14`")):
+           property, index = self.annotation_properties_obj.get_geometry_property_and_index(3.14)
 
     def test_annotationproperties_from_dict_valid_input(self):
         data = {
@@ -278,3 +275,18 @@ class test_annotationproperties(unittest.TestCase):
         for i, each_geometry_property in enumerate(obj.geometry_properties, 0):
             self.assertIsInstance(each_geometry_property, GeometryProperties,
                                   msg = f'Item at index {i} is of type {type(each_geometry_property)}, expected GeometryProperties')
+    
+    def test_annotationproperties_from_dict_invalid_input(self):
+        return
+    
+    def test_annotationproperties_to_dict_valid_input(self):
+        return
+    
+    def test_annotationproperties_to_dict_invalid_input(self):
+        return
+    
+    def test_annotationproperties_replicate_valid_input(self):
+        return
+    
+    def test_annotationproperties_replicate_invalid_input(self):
+        return
