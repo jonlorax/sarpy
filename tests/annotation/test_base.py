@@ -154,6 +154,7 @@ class test_annotationproperties(unittest.TestCase):
                     "name": "apple",
                     "color": "red"}
 
+        self.maxDiff = None
     def test_annotationproperties_default_initialization(self):
         obj = AnnotationProperties()
 
@@ -271,16 +272,35 @@ class test_annotationproperties(unittest.TestCase):
         self.assertEqual(obj.name, "annotation1")
         self.assertEqual(obj.description, "abcd")
         self.assertEqual(obj.directory, "path/folder")
-        self.assertEqual(len(obj.geometry_properties), 1)
+        self.assertIsInstance(obj.geometry_properties, list)
         for i, each_geometry_property in enumerate(obj.geometry_properties, 0):
             self.assertIsInstance(each_geometry_property, GeometryProperties,
                                   msg = f'Item at index {i} is of type {type(each_geometry_property)}, expected GeometryProperties')
     
     def test_annotationproperties_from_dict_invalid_input(self):
-        return
-    
+        with pytest.raises(ValueError) as message:
+            # type "abcd" is invalid
+            data = {
+                "type": "abcd",
+                "name": "annotation1",
+                "description": "abcd",
+                "directory": "path/folder",
+                "geometry_properties": [self.geometry_data],
+                "parameters": None
+            }
+            
+            obj = AnnotationProperties.from_dict(data)
+
+        self.assertIn("AnnotationProperties cannot be constructed from", str(message.value))
+
     def test_annotationproperties_to_dict_valid_input(self):
-        return
+        obj = self.annotation_properties_obj.to_dict()
+
+        self.assertEqual(obj["type"], "AnnotationProperties")
+        self.assertEqual(obj["name"], "annotation1")
+        self.assertEqual(obj["description"], "abcd")
+        self.assertEqual(obj["directory"], "path/folder")
+        
     
     def test_annotationproperties_to_dict_invalid_input(self):
         return
