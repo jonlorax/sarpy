@@ -41,11 +41,11 @@ class test_sio_writer(TestCase):
         with self.assertRaisesRegex(TypeError, 
                                     re.escape(
                                         "SIOWriter.__init__() missing 1 required positional argument")):
-            image_data = numpy.arange(13*17*2, dtype=numpy.float32).reshape(13, 17,2)
+            image_data = numpy.arange(13*17, dtype=numpy.float32).reshape(13, 17)
             sio_writer = SIOWriter(param_image_data=image_data)
 
     def test_write_with_required_params_only_success(self):
-        image_data = numpy.arange(13*17*2, dtype=numpy.float32).reshape(13, 17,2)
+        image_data = numpy.arange(13*17, dtype=numpy.float32).reshape(13, 17)
         output_sio_writer_32 = self.tmp_dir / "SIOWriterTest_required_params_only_success.sio"
         sio_writer = SIOWriter(output_sio_writer_32, image_data)
         sio_writer.write()
@@ -55,7 +55,7 @@ class test_sio_writer(TestCase):
         self.assertIsNone(sio_reader._sicdmeta)
 
     def test_write_with_required_params_and_sicd_meta_success(self):
-        image_data = numpy.arange(13*17*2, dtype=numpy.float32).reshape(13, 17,2)
+        image_data = numpy.arange(13*17, dtype=numpy.float32).reshape(13, 17)
         sicd_meta_real_32 = SICDType(
             ImageData=ImageDataType(
                 NumRows=image_data.shape[0],
@@ -67,8 +67,8 @@ class test_sio_writer(TestCase):
                         NumRows=image_data.shape[0],
                         NumCols=image_data.shape[1]
                     ),
-                    SCPPixel=RowColType(Row=image_data.shape[0] // 2, 
-                                        Col=image_data.shape[1] // 2)
+                    SCPPixel=RowColType(Row=image_data.shape[0], 
+                                        Col=image_data.shape[1])
             ),
         )
         output_sio_writer_32 = self.tmp_dir / "SIOWriterTest_required_params_and_sicd_meta_success.sio"
