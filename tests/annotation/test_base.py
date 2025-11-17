@@ -5,7 +5,7 @@ import unittest
 from uuid import UUID, uuid4
 
 from sarpy.annotation.base import GeometryProperties, AnnotationProperties, AnnotationFeature, AnnotationCollection, FileAnnotationCollection
-from sarpy.geometry.geometry_elements import Jsonable
+from sarpy.geometry.geometry_elements import Jsonable, Point
 
 class test_geometryproperties(unittest.TestCase):
     def test_geometryproperties_default_uid(self):
@@ -141,12 +141,14 @@ class test_annotationproperties(unittest.TestCase):
     def setUp(self):
         self.geometryproperties_obj = GeometryProperties(uid="abcd", name="efgh", color="blue")
 
+        self.test_parameter_point = Point((0,0))
+
         self.annotation_properties_obj = AnnotationProperties(
             name = "annotation1",
             description = "abcd",
             directory = "path/folder",
             geometry_properties = [self.geometryproperties_obj],
-            parameters = Jsonable()
+            parameters = self.test_parameter_point
         )
 
         self.geometry_data = {"type": "GeometryProperties",
@@ -154,7 +156,6 @@ class test_annotationproperties(unittest.TestCase):
                     "name": "apple",
                     "color": "red"}
 
-        self.maxDiff = None
     def test_annotationproperties_default_initialization(self):
         obj = AnnotationProperties()
 
@@ -170,7 +171,7 @@ class test_annotationproperties(unittest.TestCase):
             description = "abcd",
             directory = "path/folder",
             geometry_properties = [self.geometryproperties_obj],
-            parameters = Jsonable()
+            parameters = self.test_parameter_point
         )
 
         self.assertEqual(obj.name, "annotation1")
@@ -192,7 +193,7 @@ class test_annotationproperties(unittest.TestCase):
             description = "abcd",
             directory = "path/folder",
             geometry_properties = [self.geometryproperties_obj],
-            parameters = Jsonable()
+            parameters = self.test_parameter_point
         )
 
     def test_annotationproperties_invalid_description(self):
@@ -203,7 +204,7 @@ class test_annotationproperties(unittest.TestCase):
                 description = 1234,
                 directory = "path/folder",
                 geometry_properties = [self.geometryproperties_obj],
-                parameters = Jsonable()
+                parameters = self.test_parameter_point
             )
         
     def test_annotationproperties_invalid_directory(self):
@@ -214,7 +215,7 @@ class test_annotationproperties(unittest.TestCase):
                 description = "abcd",
                 directory = 1234,
                 geometry_properties = [self.geometryproperties_obj],
-                parameters = Jsonable()
+                parameters = self.test_parameter_point
             )
     
     def test_annotationproperties_invalid_geometry(self):
@@ -225,7 +226,7 @@ class test_annotationproperties(unittest.TestCase):
                 description = "abcd",
                 directory = "path/folder",
                 geometry_properties = ['abcd'],
-                parameters = Jsonable()
+                parameters = self.test_parameter_point
             )
 
     def test_annotationproperties_invalid_properties(self):
@@ -238,6 +239,30 @@ class test_annotationproperties(unittest.TestCase):
                 geometry_properties = [self.geometryproperties_obj],
                 parameters = "abcd"
             )
+
+    def test_annotationproperties_add_geometry_property(self):
+        obj = self.annotation_properties_obj
+        geom_prop = GeometryProperties(uid="efgh", name="ijkl", color="green")
+
+        # check length of geometry_properties before and after the new property was added
+        self.assertEqual(len(obj.geometry_properties), 1)
+
+        obj.add_geometry_property(geom_prop)
+        
+        # confirms that the property was successfully added since the length increased
+        self.assertEqual(len(obj.geometry_properties), 2)
+    
+    def test_annotationproperties_add_geometry_property_invalid_type(self):
+        with pytest.raises(TypeError, 
+                            match = re.escape("Got unexpected value of type <class 'str'> for geometry properties")):
+            obj = self.annotation_properties_obj
+            obj.add_geometry_property("abcd")
+
+    def test_annotationproperties_get_geometry_property(self):
+        obj = self.annotation_properties_obj
+        geom_properties = obj.get_geometry_property("abcd")
+
+        self.assertEqual(geom_properties.color, "blue")
 
     def test_annotationproperties_get_property_and_index_by_index(self):
         property, index = self.annotation_properties_obj.get_geometry_property_and_index(0)
@@ -300,13 +325,30 @@ class test_annotationproperties(unittest.TestCase):
         self.assertEqual(obj["name"], "annotation1")
         self.assertEqual(obj["description"], "abcd")
         self.assertEqual(obj["directory"], "path/folder")
-        
+        self.assertEqual(obj["parameters"]["type"], "Point")
     
-    def test_annotationproperties_to_dict_invalid_input(self):
-        return
+    def test_annotationproperties_to_dict_w_parent_dict(self):
+        parent_dict = {"key": "value"}
+
+        obj = self.annotation_properties_obj.to_dict(parent_dict)
+        
+        # this function should be adding annotationproperties to the existing parent_dict object
+        self.assertEqual(obj, parent_dict)
+    
+        # confirms the rest of the values from self.annotation_properties_obj were added to obj
+        self.assertEqual(obj["key"], "value")
+        self.assertEqual(obj["name"], "annotation1")
+        self.assertEqual(obj["description"], "abcd")
+        self.assertEqual(obj["directory"], "path/folder")
+        self.assertEqual(obj["parameters"]["type"], "Point")
     
     def test_annotationproperties_replicate_valid_input(self):
-        return
+        obj = self.annotation_properties_obj
+        replica = obj.replicate()
+
+        self.assertIsInstance(replica, AnnotationProperties)
+        self.assertEqual(replica.name, obj.name)
+        self.assertEqual(replica.description, obj.description)
+        self.assertEqual(replica.directory, obj.directory)
+
     
-    def test_annotationproperties_replicate_invalid_input(self):
-        return
