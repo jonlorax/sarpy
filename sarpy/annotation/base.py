@@ -337,6 +337,7 @@ class AnnotationProperties(Jsonable):
         Serialize to json.
 
         Parameters
+
         ----------
         parent_dict : None|Dict
 
@@ -398,7 +399,7 @@ class AnnotationFeature(Feature):
         elif isinstance(properties, dict):
             self._properties = AnnotationProperties.from_dict(properties)
         else:
-            raise TypeError('Got an unexpected type for properties attribute of class {}'.format(self.__class__))
+            raise TypeError('Got an unexpected type for properties attribute of type {}'.format(properties.__class__))
 
     def get_name(self):
         """

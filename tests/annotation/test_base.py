@@ -5,7 +5,7 @@ import unittest
 from uuid import UUID, uuid4
 
 from sarpy.annotation.base import GeometryProperties, AnnotationProperties, AnnotationFeature, AnnotationCollection, FileAnnotationCollection
-from sarpy.geometry.geometry_elements import Jsonable, Point
+from sarpy.geometry.geometry_elements import GeometryObject, Jsonable, Point
 
 class test_geometryproperties(unittest.TestCase):
     def test_geometryproperties_default_uid(self):
@@ -351,4 +351,148 @@ class test_annotationproperties(unittest.TestCase):
         self.assertEqual(replica.description, obj.description)
         self.assertEqual(replica.directory, obj.directory)
 
+class test_annotationfeature(unittest.TestCase):
+    def setUp(self):
+        self.geometryproperties_obj = GeometryProperties(uid="abcd", name="efgh", color="blue")
+
+        self.test_parameter_point = Point((0,0))
+
+        self.annotation_properties_obj = AnnotationProperties(
+            name = "annotation1",
+            description = "abcd",
+            directory = "path/folder",
+            geometry_properties = [self.geometryproperties_obj],
+            parameters = self.test_parameter_point
+        )
+
+        self.geom_dict = {
+                        "type": "Point",
+                        "coordinates": [0, 0]
+                     }
+        self.geometry_obj = GeometryObject.from_dict(self.geom_dict)
+    
+        self.annotation_feature_obj = AnnotationFeature(geometry=self.geometry_obj, properties=self.annotation_properties_obj)
+
+    def test_annotationfeature_initialization(self):
+        obj = AnnotationFeature(geometry=self.geometry_obj, properties=self.annotation_properties_obj)
+
+        self.assertEqual(obj.geometry, self.geometry_obj)
+    
+        self.assertEqual(obj.properties.name, "annotation1")
+        self.assertEqual(obj.properties.description, "abcd")
+        self.assertEqual(obj.properties.directory, "path/folder")
+    
+    def test_annotationfeature_set_properties_obj(self):
+        obj = self.annotation_feature_obj
+
+        new_properties = AnnotationProperties(name="annotation2", description="new description", directory="new path")
+        obj.properties = new_properties
+
+        self.assertEqual(obj.properties.name, "annotation2")
+        self.assertEqual(obj.properties.description, "new description")
+        self.assertEqual(obj.properties.directory, "new path")
+
+    def test_annotationfeature_set_properties_from_dict(self):
+        obj = self.annotation_feature_obj
+
+        properties_dict = {
+            "type": "AnnotationProperties",
+            "name": "annotation3",
+            "description": "new description",
+            "directory": "new path"
+        }
+        
+        obj.properties = properties_dict
+
+        self.assertEqual(obj.properties.name, "annotation3")
+        self.assertEqual(obj.properties.description, "new description")
+        self.assertEqual(obj.properties.directory, "new path")
+
+    def test_annotationfeature_set_properties_invalid_type(self):
+        obj = self.annotation_feature_obj
+        with pytest.raises(TypeError, 
+                            match = re.escape("Got an unexpected type for properties attribute of type <class 'str'>")):
+            obj.properties = "abcd"
+    
+    def test_annotationfeature_get_name(self):
+        obj = self.annotation_feature_obj
+
+        self.assertEqual(obj.get_name(), "annotation1")
+    
+    def test_annotationfeature_set_geometry_geometryobject(self):
+        obj = self.annotation_feature_obj
+
+        geom_dict = {
+                        "type": "Point",
+                        "coordinates": [2048, 2048]
+                     }
+        
+        geom_object = GeometryObject.from_dict(geom_dict)
+        obj.geometry = geom_object
+
+        self.assertEqual(obj.geometry, geom_object)
+
+    def test_annotationfeature_set_geometry_dict(self):
+        obj = self.annotation_feature_obj
+
+        geom_dict = {
+                        "type": "Point",
+                        "coordinates": [4096, 4096]
+                     }
+        
+        obj.geometry = geom_dict
+
+        self.assertListEqual(obj.geometry.coordinates.tolist(), GeometryObject.from_dict(geom_dict).coordinates.tolist())
+
+    def test_annotationfeature_invalid_set_geometry(self):
+        with pytest.raises(TypeError, 
+                            match = re.escape("geometry must be an instance of Geometry, got `<class 'str'>`")):
+            obj = self.annotation_feature_obj
+            geom_dict = "abcd"
+            obj.geometry = geom_dict
+    
+    def test_annotationfeature_geometry_count(self):
+        return
+    
+    def test_annotationfeature_get_geometry_name(self):
+        return
+    
+    def test_annotationfeature_get_geometry_point(self):
+        return
+    
+    def test_annotationfeature_get_geometry_point_and_index(self):
+        return
+    
+    def test_annotationfeature_get_geometry_and_geometry_properties(self):
+        return
+    
+    def test_annotationfeature_get_geometry_and_geometry_properties_invalid_geometry(self):
+        return
+    
+    def test_annotationfeature_get_geometry_and_geometry_properties_invalid_geometry_index(self):
+        return
+    
+    def test_annotationfeature_get_geometry_element(self):
+        return
+    
+    def test_annotationfeature_validate_geometry_element(self):
+        return
+    
+    def test_annotationfeature_validate_geometry_element_non_geometry_instance(self):
+        return
+
+    def test_annotationfeature_validate_geometry_element_type_error(self):
+        return
+    
+    def test_annotationfeature_add_geometry_element(self):
+        return
+    
+    def test_annotationfeature_add_geometry_element_invalid_geomobject(self):
+        return
+    
+    def test_annotationfeature_add_geometry_element_invalid_geomproperties(self):
+        return
+    
+    def test_annotationfeature_remove_geometry_element(self):
+        return
     
