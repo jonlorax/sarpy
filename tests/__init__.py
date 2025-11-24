@@ -72,6 +72,10 @@ def parse_file_entry(entry, default='absolute'):
         if parent_path is None:
             logging.warning('Environment variable SARPY_TEST_PATH unset, but relative path identified in unit test')
             the_file = None
+        elif 'predirs' in entry:
+            # joz adding my stuff for xplatform
+            # with open( os.path.join(parent_path, *myTestData['xplatform_dted_with_null'][0]['predirs'], myTestData['xplatform_dted_with_null'][0]['path'] ) ) as f:  ###  __WORKS__
+            the_file =  os.path.join(parent_path, *entry['predirs'], entry['path'] )            
         else:
             the_file = os.path.join(parent_path, entry['path'])
     else:
