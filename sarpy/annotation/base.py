@@ -564,7 +564,7 @@ class AnnotationFeature(Feature):
         if geometry is None:
             return geometry
         if not isinstance(geometry, Geometry):
-            raise TypeError('geometry must be an instance of Geometry base class')
+            raise TypeError('geometry must be an instance of Geometry base class. Got {}'.format(type(geometry)))
 
         if self._allowed_geometries is not None and geometry.__class__ not in self._allowed_geometries:
             raise TypeError('geometry ({}) is not of one of the allowed types ({})'.format(geometry, self._allowed_geometries))
@@ -581,12 +581,12 @@ class AnnotationFeature(Feature):
         """
 
         if not isinstance(geometry, GeometryObject):
-            raise TypeError('geometry must be a GeometryObject instance')
+            raise TypeError('geometry must be a GeometryObject instance. Got {}'.format(type(geometry)))
 
         if properties is None:
             properties = GeometryProperties()
         if not isinstance(properties, GeometryProperties):
-            raise TypeError('properties must be a GeometryProperties instance')
+            raise TypeError('properties must be a GeometryProperties instance. Got {}'.format(type(properties)))
         if self.properties is None:
             self.properties = AnnotationProperties()
 
