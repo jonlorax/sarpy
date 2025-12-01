@@ -576,4 +576,101 @@ class test_annotationfeature(unittest.TestCase):
         # confirm that Point(1, 1) is all that's left 
         self.assertEqual(obj.geometry, geometry_obj)
 
+class test_annotationcollection(unittest.TestCase):
+    def setUp(self):
+        self.geometryproperties_obj = GeometryProperties(uid="abcd", name="efgh", color="blue")
+
+        self.test_parameter_point = Point((0,0))
+
+        self.annotation_properties_obj = AnnotationProperties(
+            name = "annotation1",
+            description = "abcd",
+            directory = "path/folder",
+            geometry_properties = [self.geometryproperties_obj],
+            parameters = self.test_parameter_point
+        )
+
+        self.geom_dict = {
+                        "type": "Point",
+                        "coordinates": [0, 0]
+                     }
+        self.geometry_obj = GeometryObject.from_dict(self.geom_dict)
     
+        self.annotation_feature_obj = AnnotationFeature(geometry=self.geometry_obj, properties=self.annotation_properties_obj)
+
+        self.annotation_collection_obj =  AnnotationCollection(features=[self.annotation_feature_obj])
+
+        new_annotation_properties_obj = AnnotationProperties(
+            name = "annotation2",
+            description = "efgh",
+            directory = "path/folder2",
+        )
+
+        new_geom_dict = {
+                "type": "Point",
+                "coordinates": [1, 1]
+                }
+        new_geometry_obj = GeometryObject.from_dict(new_geom_dict)
+    
+        self.new_annotation_feature_obj = AnnotationFeature(geometry=new_geometry_obj, properties=new_annotation_properties_obj)
+
+    def test_annotationcollection_default_initialization(self):
+        obj = AnnotationCollection()
+
+        self.assertEqual(obj.features, None)
+    
+    def test_annotationcollection_initialization_with_feature(self):
+        obj = AnnotationCollection(features=[self.annotation_feature_obj])
+
+        self.assertIsInstance(obj.features, list)
+        self.assertEqual(len(obj.features), 1)
+        self.assertIsInstance(obj.features[0], AnnotationFeature)
+
+    # def test_annotationcollection_features_setter(self):
+    #     obj = self.annotation_collection_obj
+
+    #     obj.features = [self.new_annotation_feature_obj]
+
+    #     self.assertEqual(obj.features[0].geometry.coordinates.tolist(), [1,1])
+
+    def test_annotationcollection_add_features(self):
+        obj = self.annotation_collection_obj
+
+        obj.add_feature(self.new_annotation_feature_obj)
+
+        self.assertIsInstance(obj.features, list)
+        self.assertEqual(len(obj.features), 2)
+    
+    # def test_annotationcollection_add_features_dict(self):
+    #     obj = self.annotation_collection_obj
+
+    #     properties_dict = {
+    #         "type": "AnnotationFeature",
+    #         "geometry": {
+    #                     "type": "Point",
+    #                     "coordinates": [1, 1]
+    #                  },
+    #         "properties": {
+    #             "type": "AnnotationProperties",
+    #             "name": "annotation3",
+    #             "description": "new description",
+    #             "directory": "new path"
+    #         }
+    #     }
+        
+    #     obj.add_feature(properties_dict)
+
+    #     self.assertIsInstance(obj.features, list)
+    #     self.assertEqual(len(obj.features), 2)
+    
+    def test_annotationcollection_add_invalid_feature(self):
+        obj = self.annotation_collection_obj
+
+        with pytest.raises(TypeError, match = re.escape("This requires an AnnotationFeature instance, got <class 'str'>")):
+            obj.add_feature("abcd")
+
+    def annotation_collection_getitem_by_index(self):
+        return
+    
+    def annotation_collection_getitem_by_key(self):
+        return
