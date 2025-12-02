@@ -377,6 +377,7 @@ class AnnotationFeature(Feature):
     populated with AnnotationProperties instance.
     """
     _allowed_geometries = None
+    _type = "AnnotationFeature"
 
     @property
     def properties(self):
@@ -627,6 +628,19 @@ class AnnotationFeature(Feature):
             del self.geometry.collection[index]
             del self.properties.geometry_properties[index]
 
+    @classmethod
+    def from_dict(cls, the_json):
+        typ = the_json['type']
+        if typ != cls._type:
+            raise ValueError('AnnotationFeature cannot be constructed from {}, expecting {}'.format(typ, cls._type))
+
+        the_id = the_json.get('id', None)
+        if the_id is None:
+            the_id = the_json.get('uid', None)
+
+        return cls(uid=the_id,
+                   geometry=the_json.get('geometry', None),
+                   properties=the_json.get('properties', None))
 
 class AnnotationCollection(FeatureCollection):
     """

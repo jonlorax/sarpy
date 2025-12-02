@@ -641,27 +641,27 @@ class test_annotationcollection(unittest.TestCase):
         self.assertIsInstance(obj.features, list)
         self.assertEqual(len(obj.features), 2)
     
-    # def test_annotationcollection_add_features_dict(self):
-    #     obj = self.annotation_collection_obj
+    def test_annotationcollection_add_features_dict(self):
+        obj = self.annotation_collection_obj
 
-    #     properties_dict = {
-    #         "type": "AnnotationFeature",
-    #         "geometry": {
-    #                     "type": "Point",
-    #                     "coordinates": [1, 1]
-    #                  },
-    #         "properties": {
-    #             "type": "AnnotationProperties",
-    #             "name": "annotation3",
-    #             "description": "new description",
-    #             "directory": "new path"
-    #         }
-    #     }
-        
-    #     obj.add_feature(properties_dict)
+        properties_dict = {
+            "type": "AnnotationFeature",
+            "geometry": {
+                        "type": "Point",
+                        "coordinates": [1, 1]
+                     },
+            "properties": {
+                "type": "AnnotationProperties",
+                "name": "annotation3",
+                "description": "new description",
+                "directory": "new path"
+            }
+        }
 
-    #     self.assertIsInstance(obj.features, list)
-    #     self.assertEqual(len(obj.features), 2)
+        obj.add_feature(properties_dict)
+
+        self.assertIsInstance(obj.features, list)
+        self.assertEqual(len(obj.features), 2)
     
     def test_annotationcollection_add_invalid_feature(self):
         obj = self.annotation_collection_obj
