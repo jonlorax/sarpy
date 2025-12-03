@@ -428,6 +428,11 @@ class test_annotationfeature(unittest.TestCase):
         # confirms that a uid is generated even if there's no properties or properties.name
         self.assertIsNotNone(obj.get_name)
 
+    def annotationfeature_get_name_none(self):
+        obj = AnnotationFeature()
+
+        self.assertIs(UUID(obj.uid, version=4))
+
     def test_annotationfeature_get_name(self):
         obj = self.annotation_feature_obj
 
@@ -465,6 +470,11 @@ class test_annotationfeature(unittest.TestCase):
             geom_dict = "abcd"
             obj.geometry = geom_dict
     
+    def test_annotationfeature_geometry_count_none(self):
+        obj = AnnotationFeature()
+
+        self.assertEqual(obj.geometry_count, 0)
+
     def test_annotationfeature_geometry_count_collection(self):
         p1 = Point([1, 1])
         p2 = Point([2, 2])
@@ -481,7 +491,7 @@ class test_annotationfeature(unittest.TestCase):
         obj = self.annotation_feature_obj
 
         self.assertEqual(obj.geometry_count, 1)
-    
+
     def test_annotationfeature_get_geometry_name(self):
         obj = self.annotation_feature_obj
 
@@ -502,6 +512,18 @@ class test_annotationfeature(unittest.TestCase):
 
         self.assertEqual(obj.get_geometry_and_geometry_properties(0), (self.geometry_obj, self.geometryproperties_obj))
     
+    def test_annotationfeature_get_geometry_and_geometry_properties_collection(self):
+        p1 = Point([1, 1])
+        p2 = Point([2, 2])
+        p3 = Point([3, 3])
+
+        geom_collection = GeometryCollection([p1, p2, p3])
+
+        obj = self.annotation_feature_obj
+        obj.geometry = geom_collection
+
+        self.assertEqual(obj.get_geometry_and_geometry_properties(0), (p1, self.geometryproperties_obj))
+
     def test_annotationfeature_get_geometry_and_geometry_properties_invalid_geometry(self):
         obj = AnnotationFeature()
         
@@ -519,6 +541,11 @@ class test_annotationfeature(unittest.TestCase):
 
         self.assertEqual(obj.get_geometry_element(0), self.geometry_obj)
     
+    def test_annotationfeature_validate_geometry_element_none(self):
+        obj = AnnotationFeature()
+
+        self.assertIsNone(obj._validate_geometry_element(None))
+
     def test_annotationfeature_validate_geometry_element(self):
         obj = self.annotation_feature_obj
         self.assertEqual(obj._validate_geometry_element(self.geometry_obj), self.geometry_obj)
@@ -536,6 +563,14 @@ class test_annotationfeature(unittest.TestCase):
         with pytest.raises(TypeError, match = re.escape('geometry (Point(**{\n "type": "Point",\n "coordinates": [\n  0.0,\n  0.0\n ]\n})) is not of one of the allowed types ({<class \'sarpy.geometry.geometry_elements.Polygon\'>})')):
             obj._validate_geometry_element(self.geometry_obj)
     
+    def test_annotationfeature_add_geometry_element_none_property(self):
+        obj = AnnotationFeature()
+
+        # confirms None AnnotationProperty instance by checking the attributes
+        self.assertIsNone(obj.properties.name)
+        self.assertIsNone(obj.properties.description)
+        self.assertIsNone(obj.properties.directory)
+
     def test_annotationfeature_add_geometry_element(self):
         obj = self.annotation_feature_obj
         self.assertEqual(obj.geometry_count, 1)
@@ -576,6 +611,44 @@ class test_annotationfeature(unittest.TestCase):
         # confirm that Point(1, 1) is all that's left 
         self.assertEqual(obj.geometry, geometry_obj)
 
+    def test_annotationfeature_remove_geometry_element_one_element(self):
+        obj = self.annotation_feature_obj
+
+        obj.remove_geometry_element(0)
+
+        self.assertIsNone(obj.geometry)
+        
+        # confirms None AnnotationProperty instance by checking the attributes
+        self.assertIsNone(obj.properties.name)
+        self.assertIsNone(obj.properties.description)
+        self.assertIsNone(obj.properties.directory)
+
+    def test_annotationfeature_remove_geometry_element_more_than_two_elements(self):
+        obj = self.annotation_feature_obj
+        
+        geom_dict = {
+                        "type": "Point",
+                        "coordinates": [1, 1]
+                     }
+        geometry_obj = GeometryObject.from_dict(geom_dict)
+
+        # add two more points to make 3 total elements
+        obj.add_geometry_element(geometry_obj)
+        obj.add_geometry_element(geometry_obj)
+
+        # confirms that there are 3 elements
+        self.assertEqual(obj.geometry_count, 3)
+
+        obj.remove_geometry_element(1)
+
+        self.assertEqual(obj.geometry_count, 2)
+
+    def test_annotationfeature_from_dict(self):
+        return
+    
+    def test_annotationfeature_from_dict_value_error(self):
+        return
+    
 class test_annotationcollection(unittest.TestCase):
     def setUp(self):
         self.geometryproperties_obj = GeometryProperties(uid="abcd", name="efgh", color="blue")
@@ -612,8 +685,16 @@ class test_annotationcollection(unittest.TestCase):
                 }
         new_geometry_obj = GeometryObject.from_dict(new_geom_dict)
     
-        self.new_annotation_feature_obj = AnnotationFeature(geometry=new_geometry_obj, properties=new_annotation_properties_obj)
+        self.annotation_feature_obj2 = AnnotationFeature(geometry=new_geometry_obj, properties=new_annotation_properties_obj)
 
+        self.geom_dict2 = {
+                        "type": "Point",
+                        "coordinates": [1, 1]
+                     }
+        self.geometry_obj2 = GeometryObject.from_dict(self.geom_dict2)
+        
+        self.annotation_collection_obj_multifeature = AnnotationCollection(features=[self.annotation_feature_obj, self.annotation_feature_obj2])
+    
     def test_annotationcollection_default_initialization(self):
         obj = AnnotationCollection()
 
@@ -626,17 +707,29 @@ class test_annotationcollection(unittest.TestCase):
         self.assertEqual(len(obj.features), 1)
         self.assertIsInstance(obj.features[0], AnnotationFeature)
 
-    # def test_annotationcollection_features_setter(self):
-    #     obj = self.annotation_collection_obj
+    def test_annotationcollection_features_setter(self):
+        obj = AnnotationFeature()
 
-    #     obj.features = [self.new_annotation_feature_obj]
+        obj.features = [self.annotation_feature_obj2]
 
-    #     self.assertEqual(obj.features[0].geometry.coordinates.tolist(), [1,1])
+        self.assertEqual(obj.features[0].geometry.coordinates.tolist(), [1,1])
+
+    def test_annotationcollection_features_setter_none_features(self):
+        obj = AnnotationCollection()
+
+        self.assertIsNone(obj._features)
+        self.assertIsNone(obj._feature_dict)
+
+    def test_annotationcollection_features_setter_type_error(self):
+        obj = self.annotation_collection_obj
+
+        with pytest.raises(TypeError, match = re.escape("features must be a list of AnnotationFeatures. Got <class 'str'>")):
+            obj.features = "abc"
 
     def test_annotationcollection_add_features(self):
         obj = self.annotation_collection_obj
 
-        obj.add_feature(self.new_annotation_feature_obj)
+        obj.add_feature(self.annotation_feature_obj2)
 
         self.assertIsInstance(obj.features, list)
         self.assertEqual(len(obj.features), 2)
@@ -669,8 +762,15 @@ class test_annotationcollection(unittest.TestCase):
         with pytest.raises(TypeError, match = re.escape("This requires an AnnotationFeature instance, got <class 'str'>")):
             obj.add_feature("abcd")
 
+    def annotationcollection_getitem_stopiteration(self):
+        obj = AnnotationCollection()
+        obj.features = None
+
+        with pytest.raises(StopIteration):
+            obj.__getitem__(0)
+
     def annotation_collection_getitem_by_index(self):
-        return
+        obj = self.annotation_collection_obj_multifeature
+
+        self.assertEqual(obj.__getitem__(1).geometry.coordinates.tolist(), [1, 1])
     
-    def annotation_collection_getitem_by_key(self):
-        return
