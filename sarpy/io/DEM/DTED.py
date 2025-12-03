@@ -385,6 +385,8 @@ class DTEDReader(object):
         """
         if no_voids and ( elevations & 0xffff) == 0xffff:
             out = elevations ^ elevations
+            logger.warning( "Warning your DTED data has voids in it, this effect interpolation. Try with no_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
+            print( "Warning your DTED data has voids in it, this effect interpolation. Try with no_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
         else:
             out = (elevations & 0x7f_ff).astype(numpy.int16)
             out *= (-1) ** ((elevations & 0x80_00) != 0)
