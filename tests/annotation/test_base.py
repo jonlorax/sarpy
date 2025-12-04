@@ -83,6 +83,11 @@ class test_geometryproperties(unittest.TestCase):
         self.assertEqual(geom.name, "efgh")
         self.assertEqual(geom.color, "red")
 
+    def test_geometry_properties_from_dict_int(self):
+        with pytest.raises(TypeError,
+                            match = re.escape("This requires a dict. Got type <class 'int'>")):
+            geom = GeometryProperties.from_dict(1234)
+        
     def test_geometryproperties_from_dict_missing_type(self):
         # confirms that an error is raised if the dict is missing type
         bad_data = {
@@ -90,22 +95,22 @@ class test_geometryproperties(unittest.TestCase):
             "name": "efgh",
             "color": "red"
         }
-
-        with pytest.raises(ValueError,
+        
+        with pytest.raises(KeyError,
                             match = re.escape("the json requires the field 'type'")):
             geom = GeometryProperties.from_dict(bad_data)
     
-    def test_geometryproperties_from_dict_missing_type(self):
+    def test_geometryproperties_from_dict_wrong_type_value(self):
         # confirms that an error is raised if the dict is missing type
         bad_data = {
-            "type": "string",
+            "type": "incorrect_string",
             "uid": "abcd",
             "name": "efgh",
             "color": "red"
         }
 
         with pytest.raises(ValueError, 
-                            match = re.escape("GeometryProperties cannot be constructed from {'type': 'string', 'uid': 'abcd', 'name': 'efgh', 'color': 'red'}")):
+                            match = re.escape("GeometryProperties cannot be constructed from incorrect_string, expecting GeometryProperties")):
             geom = GeometryProperties.from_dict(bad_data)
 
     def test_geometryproperties_to_dict_geometryproperties_w_values(self):
@@ -302,8 +307,9 @@ class test_annotationproperties(unittest.TestCase):
             self.assertIsInstance(each_geometry_property, GeometryProperties,
                                   msg = f'Item at index {i} is of type {type(each_geometry_property)}, expected GeometryProperties')
     
-    def test_annotationproperties_from_dict_invalid_input(self):
-        with pytest.raises(ValueError) as message:
+    def test_annotationproperties_from_dict_invalid_type_value(self):
+        with pytest.raises(ValueError, 
+                            match = re.escape('AnnotationProperties cannot be constructed from abcd, expecting AnnotationProperties')):
             # type "abcd" is invalid
             data = {
                 "type": "abcd",
@@ -316,7 +322,23 @@ class test_annotationproperties(unittest.TestCase):
             
             obj = AnnotationProperties.from_dict(data)
 
-        self.assertIn("AnnotationProperties cannot be constructed from", str(message.value))
+    def test_annotationproperties_from_dict_missing_type_value(self):
+        with pytest.raises(KeyError, 
+                            match = re.escape("the json requires the field 'type'")):
+            data = {
+                "name": "annotation1",
+                "description": "abcd",
+                "directory": "path/folder",
+                "geometry_properties": [self.geometry_data],
+                "parameters": None
+            }
+            
+            obj = AnnotationProperties.from_dict(data)
+
+    def test_annotationproperties_from_dict_int(self):
+        with pytest.raises(TypeError, 
+                            match = re.escape("This requires a dict. Got type <class 'int'>")):
+            obj = AnnotationProperties.from_dict(1234)
 
     def test_annotationproperties_to_dict_valid_input(self):
         obj = self.annotation_properties_obj.to_dict()
@@ -422,16 +444,12 @@ class test_annotationfeature(unittest.TestCase):
                             match = re.escape("Got an unexpected type for properties attribute of type <class 'str'>")):
             obj.properties = "abcd"
     
-    def test_annotationfeature_get_name_none_property(self):
+    def test_annotationfeature_get_name_none(self):
         obj = AnnotationFeature()
 
         # confirms that a uid is generated even if there's no properties or properties.name
-        self.assertIsNotNone(obj.get_name)
-
-    def annotationfeature_get_name_none(self):
-        obj = AnnotationFeature()
-
-        self.assertIs(UUID(obj.uid, version=4))
+        self.assertIsNotNone(obj.get_name())
+        self.assertTrue(UUID(obj.uid, version=4))
 
     def test_annotationfeature_get_name(self):
         obj = self.annotation_feature_obj
@@ -563,13 +581,20 @@ class test_annotationfeature(unittest.TestCase):
         with pytest.raises(TypeError, match = re.escape('geometry (Point(**{\n "type": "Point",\n "coordinates": [\n  0.0,\n  0.0\n ]\n})) is not of one of the allowed types ({<class \'sarpy.geometry.geometry_elements.Polygon\'>})')):
             obj._validate_geometry_element(self.geometry_obj)
     
-    def test_annotationfeature_add_geometry_element_none_property(self):
+    def test_annotationfeature_add_geometry_element_none(self):
         obj = AnnotationFeature()
 
-        # confirms None AnnotationProperty instance by checking the attributes
+        self.assertEqual(obj.geometry_count, 0)
+
+        obj.add_geometry_element(self.geometry_obj)
+
+        # confirms that a None AnnotationProperty instance is generated by checking the attributes
         self.assertIsNone(obj.properties.name)
         self.assertIsNone(obj.properties.description)
         self.assertIsNone(obj.properties.directory)
+
+        # confirms that the geometry element got added to the newly generated AnnotationProperty of this AnnotationFeature instance
+        self.assertEqual(obj.geometry_count, 1)
 
     def test_annotationfeature_add_geometry_element(self):
         obj = self.annotation_feature_obj
@@ -617,7 +642,7 @@ class test_annotationfeature(unittest.TestCase):
         obj.remove_geometry_element(0)
 
         self.assertIsNone(obj.geometry)
-        
+
         # confirms None AnnotationProperty instance by checking the attributes
         self.assertIsNone(obj.properties.name)
         self.assertIsNone(obj.properties.description)
@@ -644,11 +669,39 @@ class test_annotationfeature(unittest.TestCase):
         self.assertEqual(obj.geometry_count, 2)
 
     def test_annotationfeature_from_dict(self):
-        return
-    
+        features_dict = {
+            "type": "AnnotationFeature",
+            "geometry": {
+                        "type": "Point",
+                        "coordinates": [1, 1]
+                     },
+            "properties": {
+                "type": "AnnotationProperties",
+                "name": "annotation3",
+                "description": "new description",
+                "directory": "new path"
+            }
+        }
+
+        obj = AnnotationFeature.from_dict(features_dict)
+
+        self.assertEqual(obj.type, "AnnotationFeature")
+        self.assertIsInstance(obj, AnnotationFeature)
+
     def test_annotationfeature_from_dict_value_error(self):
-        return
+        features_dict = "abcd"
+        
+        with pytest.raises(TypeError,
+                            match = re.escape("This requires a dict. Got type <class 'str'>")):
+            AnnotationFeature.from_dict(features_dict)
     
+    def test_annotationfeature_from_dict_type_error(self):
+        features_dict = 1234
+        
+        with pytest.raises(TypeError,
+                            match = re.escape("This requires a dict. Got type <class 'int'>")):
+            AnnotationFeature.from_dict(features_dict)
+
 class test_annotationcollection(unittest.TestCase):
     def setUp(self):
         self.geometryproperties_obj = GeometryProperties(uid="abcd", name="efgh", color="blue")
@@ -737,7 +790,7 @@ class test_annotationcollection(unittest.TestCase):
     def test_annotationcollection_add_features_dict(self):
         obj = self.annotation_collection_obj
 
-        properties_dict = {
+        features_dict = {
             "type": "AnnotationFeature",
             "geometry": {
                         "type": "Point",
@@ -751,7 +804,7 @@ class test_annotationcollection(unittest.TestCase):
             }
         }
 
-        obj.add_feature(properties_dict)
+        obj.add_feature(features_dict)
 
         self.assertIsInstance(obj.features, list)
         self.assertEqual(len(obj.features), 2)

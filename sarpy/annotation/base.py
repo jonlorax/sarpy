@@ -89,12 +89,18 @@ class GeometryProperties(Jsonable):
         -------
         GeometryProperties
         """
-
-        typ = the_json['type']
-        if "type" not in the_json.keys():
-            raise ValueError("the json requires the field 'type'")
+        
+        if not isinstance(the_json, dict):
+            raise TypeError('This requires a dict. Got type {}'.format(type(the_json)))
+        
+        typ = the_json.get('type', None) # prevents key error from being thrown if 'type' isn't in the_json
+        
+        if typ is None:
+            raise KeyError("the json requires the field 'type'")
+        
         if typ != cls._type:
-            raise ValueError('GeometryProperties cannot be constructed from {}'.format(the_json))
+            raise ValueError('GeometryProperties cannot be constructed from {}, expecting {}'.format(typ, cls._type))
+
         return cls(
             uid=the_json.get('uid', None),
             name=the_json.get('name', None),
@@ -321,10 +327,17 @@ class AnnotationProperties(Jsonable):
         AnnotationProperties
         """
 
-        typ = the_json['type']
+        if not isinstance(the_json, dict):
+            raise TypeError('This requires a dict. Got type {}'.format(type(the_json)))
+
+        typ = the_json.get('type', None) # prevents key error from being thrown if 'type' isn't in the_json
+        
+        if typ is None:
+            raise KeyError("the json requires the field 'type'")
+        
         if typ != cls._type:
-            raise ValueError('AnnotationProperties cannot be constructed from {}'.format(the_json))
-      
+            raise ValueError('AnnotationProperties cannot be constructed from {}, expecting {}'.format(typ, cls._type))
+        
         return cls(
             name=the_json.get('name', None),
             description=the_json.get('description', None),
@@ -586,10 +599,15 @@ class AnnotationFeature(Feature):
 
         if properties is None:
             properties = GeometryProperties()
+
         if not isinstance(properties, GeometryProperties):
             raise TypeError('properties must be a GeometryProperties instance. Got {}'.format(type(properties)))
+   
         if self.properties is None:
             self.properties = AnnotationProperties()
+        
+        if self.geometry is None:
+            self.geometry = GeometryCollection()
 
         # handle the geometry
         self._geometry = self._validate_geometry_element(
@@ -630,7 +648,14 @@ class AnnotationFeature(Feature):
 
     @classmethod
     def from_dict(cls, the_json):
-        typ = the_json['type']
+        if not isinstance(the_json, dict):
+            raise TypeError('This requires a dict. Got type {}'.format(type(the_json)))
+
+        typ = the_json.get('type', None) # prevents key error from being thrown if 'type' isn't in the_json
+        
+        if typ is None:
+            raise KeyError("the json requires the field 'type'")
+
         if typ != cls._type:
             raise ValueError('AnnotationFeature cannot be constructed from {}, expecting {}'.format(typ, cls._type))
 
