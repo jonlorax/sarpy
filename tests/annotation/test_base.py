@@ -245,6 +245,19 @@ class test_annotationproperties(unittest.TestCase):
                 parameters = "abcd"
             )
 
+    def test_annotationproperties_geometryproperties_setter(self):
+        obj = AnnotationProperties()
+        obj.geometry_properties = [self.geometryproperties_obj, self.geometryproperties_obj]
+
+        self.assertEqual(len(obj.geometry_properties), 2)
+
+    def test_annotationproperties_geometryproperties_setter_type_error(self):
+        obj = AnnotationProperties()
+
+        with pytest.raises(TypeError, 
+                match = re.escape("Got unexpected value of type <class 'str'> for geometry properties")):
+            obj.geometry_properties = "abcd"
+
     def test_annotationproperties_add_geometry_property(self):
         obj = self.annotation_properties_obj
         geom_prop = GeometryProperties(uid="efgh", name="ijkl", color="green")
@@ -688,11 +701,22 @@ class test_annotationfeature(unittest.TestCase):
         self.assertEqual(obj.type, "AnnotationFeature")
         self.assertIsInstance(obj, AnnotationFeature)
 
-    def test_annotationfeature_from_dict_value_error(self):
-        features_dict = "abcd"
+    def test_annotationfeature_from_dict_key_error(self):
+        features_dict = {
+            "geometry": {
+                        "type": "Point",
+                        "coordinates": [1, 1]
+                     },
+            "properties": {
+                "type": "AnnotationProperties",
+                "name": "annotation3",
+                "description": "new description",
+                "directory": "new path"
+            }
+        }
         
-        with pytest.raises(TypeError,
-                            match = re.escape("This requires a dict. Got type <class 'str'>")):
+        with pytest.raises(KeyError,
+                            match = re.escape("the json requires the field 'type'")):
             AnnotationFeature.from_dict(features_dict)
     
     def test_annotationfeature_from_dict_type_error(self):
@@ -700,6 +724,25 @@ class test_annotationfeature(unittest.TestCase):
         
         with pytest.raises(TypeError,
                             match = re.escape("This requires a dict. Got type <class 'int'>")):
+            AnnotationFeature.from_dict(features_dict)
+
+    def test_annotationfeature_from_dict_value_error(self):
+        features_dict = {
+            "type": "incorrect_type",
+            "geometry": {
+                        "type": "Point",
+                        "coordinates": [1, 1]
+                     },
+            "properties": {
+                "type": "AnnotationProperties",
+                "name": "annotation3",
+                "description": "new description",
+                "directory": "new path"
+            }
+        }
+        
+        with pytest.raises(ValueError,
+                            match = re.escape("AnnotationFeature cannot be constructed from incorrect_type, expecting AnnotationFeature")):
             AnnotationFeature.from_dict(features_dict)
 
 class test_annotationcollection(unittest.TestCase):
@@ -769,6 +812,7 @@ class test_annotationcollection(unittest.TestCase):
 
     def test_annotationcollection_features_setter_none_features(self):
         obj = AnnotationCollection()
+        obj.features = None
 
         self.assertIsNone(obj._features)
         self.assertIsNone(obj._feature_dict)
