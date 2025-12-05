@@ -48,7 +48,7 @@ def check_for_voids(dtedFilePath, return_index=False ):
         files = []
         for root, _, tmpFiles in os.walk( dtedFilePath ):
             for filename in tmpFiles:
-                if filename.endswith(".dt1"):  # check for ".zip" extension
+                if filename.endswith(".dt1"):  # check for ".dt1" extension
                     file_path = os.path.join(root, filename)
                     files.append( file_path )        
         
@@ -63,12 +63,11 @@ def check_for_voids(dtedFilePath, return_index=False ):
 
         value_to_check = 65535  # 16 bit value that defines a void cell value in dted data as per spec.
         is_present     = str( np.isin( value_to_check, dted_reader._mem_map ).any())
-        print("is_present: type: {}    -->{}<--".format( type( is_present), is_present))
-
+        
         if return_index == True:
             
             # one can display dted data in QGIS
-            # and can display indivual cell values with the QGIS plugin Value Tool
+            # and can display individual cell values with the QGIS plugin Value Tool
             #  see DTEDReader tests in tests/io/DEM/test_dted.py
             #
             # qgis_row = 1200 -  known_value[ 1 ] # dted1 data is in 1200 blocks
@@ -84,22 +83,12 @@ def check_for_voids(dtedFilePath, return_index=False ):
             # break up indices for output via dict or json
             index0 = indices[0].tolist()
             index1 = indices[1].tolist()
-            
-            print( "len of index0: {}  index1: {}".format( len( index0), len( index1 )))
-            
+
             result_set[ dted_file ]               = {}
-            result_set[ dted_file ][ 'indices']   = list(map( tuple, (index0, index1)))       # indices.tolist()
+            result_set[ dted_file ][ 'indices']   = list(map( tuple, (index0, index1)))
             result_set[ dted_file ][ 'has_voids'] = is_present
         
         else:
             result_set[ dted_file ] = is_present
 
-    print( "result_set: {}".format( result_set ))
-    print( "__JSON__  result_set: {}".format( json.dumps( result_set, indent=2 )))
     return result_set
-
-
-print( "file:          {}".format( check_for_voids(   "c:\\Users\\JohnO'Neill\\Downloads\\dem\\dted\\n33_w119_3arc_v1.dt1" )))
-print( "list of files: {}".format( check_for_voids( [ "c:\\Users\\JohnO'Neill\\Downloads\\dem\\dted\\n33_w119_3arc_v1.dt1" , "c:\\Users\\JohnO'Neill\\Downloads\\dem\\dted\\s36_e149_3arc_v1.dt1" ])))  
-print( "_Dirs Test_" )
-print( "Dirs:          {}".format( check_for_voids(   "c:\\Users\\JohnO'Neill\\Downloads\\dem\\dted\\" , return_index = True )))
