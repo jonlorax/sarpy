@@ -628,6 +628,19 @@ class test_annotationfeature(unittest.TestCase):
         with pytest.raises(TypeError, match = re.escape("properties must be a GeometryProperties instance. Got <class 'str'>")):
             obj.add_geometry_element(self.geometry_obj, "abcd")
 
+    def test_annotationfeature_add_geometry_element_logger(self):
+        obj = AnnotationFeature()
+        obj.properties.geometry_properties = self.geometryproperties_obj
+        obj.geometry_count = 1234
+
+        obj.add_geometry_element(self.geometryproperties_obj)
+
+        # pick up the logger error
+        with self.assertLogs(__name__) as context_manager:
+            obj.validate_configuration(obj.properties.geometry_properties != obj.geometry_count)
+
+        self.assertIn("There are 1234 geometry elements defined\n\t and 2 geometry properties populated. This is likely to cause problems.", context_manager.output[0])
+    
     def test_annotationfeature_remove_geometry_element(self):
         obj = self.annotation_feature_obj
         geom_dict = {
@@ -894,30 +907,8 @@ class test_fileannotationcollection(unittest.TestCase):
         self.annotation_feature_obj = AnnotationFeature(geometry=self.geometry_obj, properties=self.annotation_properties_obj)
 
         self.annotation_collection_obj =  AnnotationCollection(features=[self.annotation_feature_obj])
-
-        # new_annotation_properties_obj = AnnotationProperties(
-        #     name = "annotation2",
-        #     description = "efgh",
-        #     directory = "path/folder2",
-        # )
-
-        # new_geom_dict = {
-        #         "type": "Point",
-        #         "coordinates": [1, 1]
-        #         }
-        # new_geometry_obj = GeometryObject.from_dict(new_geom_dict)
-    
-        # self.annotation_feature_obj2 = AnnotationFeature(geometry=new_geometry_obj, properties=new_annotation_properties_obj)
-
-        # self.geom_dict2 = {
-        #                 "type": "Point",
-        #                 "coordinates": [1, 1]
-        #              }
-        # self.geometry_obj2 = GeometryObject.from_dict(self.geom_dict2)
         
         self.annotation_collection = AnnotationCollection(features=[self.annotation_feature_obj])
-        
-        # self.annotation_collection_obj_multifeature = AnnotationCollection(features=[self.annotation_feature_obj, self.annotation_feature_obj2])
 
         version = "test_version"
         annotations = self.annotation_collection_obj
@@ -952,6 +943,10 @@ class test_fileannotationcollection(unittest.TestCase):
         self.assertIsNone(obj._core_name)
 
         # pick up the logger error
+        with self.assertLogs(__name__) as context_manager:
+            obj.validate_configuration(image_file_name=None, image_id=None, core_name=None)
+        
+        self.assertIn("One of image_file_name, image_id, or core_name should be defined", context_manager.output[0])
 
     def fileannotationcollection_initialization_type_error(self):
         _version = "test_version"
@@ -1005,44 +1000,154 @@ class test_fileannotationcollection(unittest.TestCase):
         self.assertIsInstance(obj.annotations, AnnotationCollection)
     
     def fileannotationcollection_annotations_setter_dict(self):
-        return
+        dict = {
+            "type": "AnnotationCollection",
+            "features": [
+                            {
+                                "type": "AnnotationFeature",
+                                "geometry": {
+                                            "type": "Point",
+                                            "coordinates": [1, 1]
+                                        },
+                                "properties": {
+                                    "type": "AnnotationProperties",
+                                    "name": "annotation3",
+                                    "description": "new description",
+                                    "directory": "new path"
+                                }
+                            }
+                        ]
+        }
+        
+        obj = self.file_annotation_collection_obj
+        obj.annotations(dict)
+
+        self.assertEqual(obj.annotations.features[0].geometry.coordinates.tolist(), [1, 1])
+        self.assertIsInstance(obj.annotations, AnnotationCollection)
     
     def fileannotationcollection_annotations_setter_type_error(self):
-        return
+        obj = self.file_annotation_collection_obj
+
+        with pytest.raises(TypeError, match = re.escape("annotations must be an AnnotationCollection. Got type <class 'int'>")):
+            obj.annotations = 1234
     
     def fileannotationcollection_add_annotation_dict(self):
-        return
+        features_dict = {
+            "type": "AnnotationFeature",
+            "geometry": {
+                        "type": "Point",
+                        "coordinates": [1, 1]
+                     },
+            "properties": {
+                "type": "AnnotationProperties",
+                "name": "annotation3",
+                "description": "new description",
+                "directory": "new path"
+            }
+        }
+
+        obj = self.file_annotation_collection_obj
+
+        obj.add_annotation(features_dict)
+
+        self.assertEqual()
     
     def fileannotationcollection_add_annotation_type_error(self):
-        return
+        obj = self.file_annotation_collection_obj
+
+        with pytest.raises(TypeError, match = re.escape("This requires an AnnotationFeature instance. Got <class 'int'>")):
+            obj.add_annotation(1234)
     
     def fileannotationcollection_add_annotation_none(self):
-        return
+        obj = FileAnnotationCollection()
+
+        obj.add_annotation(None)
+
+        self.assertIsNone(obj.annotations)
     
     def fileannotationcollection_add_annotation_annotationfeature(self):
-        return
+        obj = FileAnnotationCollection()
+
+        obj.add_annotation(self.annotation_feature_obj)
+
+        self.assertEqual()
     
     def fileannotationcollection_delete_annotation(self):
-        return
+        obj = self.file_annotation_collection_obj
+
+        # obj.delete_annotation() # find out what i should be using for annotation id
     
     def fileannotationcollection_from_file(self):
+        # create json file for this test
+
         return
     
     def fileannotationcollection_from_dict_non_dict(self):
-        return
+        with pytest.raises(TypeError, match = re.escape("This requires a dict. Got type <class 'int'>")):
+            obj = FileAnnotationCollection.from_dict(1234)
     
     def fileannotationcollection_from_dict_value_error(self):
-        return
+        dict = {
+            "type": "incorrect_type"
+        }
+
+        with pytest.raises(ValueError, match = re.escape("FileAnnotationCollection cannot be constructed from the input dictionary")):
+            obj = FileAnnotationCollection.from_dict(dict)
     
     def fileannotationcollection_from_dict(self):
         return
 
     def fileannotationcollection_to_dict_none(self):
-        return
+        obj = FileAnnotationCollection()
+
+        return_dict = obj.to_dict()
+
+        self.assertEqual(return_dict.type, "FileAnnotationCollection")
+        self.assertEqual(return_dict.version, "Base:1.0")   
     
     def fileannotationcollection_to_dict(self):
-        return
+        obj = self.file_annotation_collection_obj
+
+        return_dict = obj.to_dict()
+
+        version = "test_version"
+        annotations = self.annotation_collection_obj
+        image_file_name = "test_image_file_name"
+        image_id = "test_image_id"
+        core_name = "test_core_name"
+
+        self.assertEqual(return_dict.type, "FileAnnotationCollection")
+        self.assertEqual(return_dict.image_file_name, "test_image_fil_name")
+        self.assertEqual(return_dict.version, "test_version"),
+        self.assertEqual(return_dict.image_id, "test_image_id")
+        self.assertEqual(return_dict.core_name, "test_core_name")
+
+        test_annotation = self.annotation_collection_obj.to_dict()
+        self.assertEqual(return_dict.annotations, test_annotation)
+    
+    def fileannoationcollection_to_dict_with_parent_dict(self):
+        parent_dict = {
+            "type": "FileAnnotationCollection",
+            "image_file_name": "un-updated image_file_name",
+            "version": "un-updated version",
+            "image_id": "un-updated image_id",
+            "core_name": "un-updated core_name"
+        }
+        
+        self.file_annotation_collection_obj.to_dict(parent_dict)
+
+        # fields should be updated from the file_annotation_collection_obj
+        self.assertEqual(parent_dict.type, "FileAnnotationCollection")
+        self.assertEqual(parent_dict.image_file_name, "test_image_file_name")
+        self.assertEqual(parent_dict.version, "test_version"),
+        self.assertEqual(parent_dict.image_id, "test_image_id")
+        self.assertEqual(parent_dict.core_name, "test_core_name")
+
+        test_annotation = self.annotation_collection_obj.to_dict()
+        self.assertEqual(parent_dict.annotations, test_annotation)
     
     def fileannotationcollection_to_file(self):
-        return
+        obj = self.file_annotation_collection_obj
+
+        obj.to_file("test_fileannotationcollection_to_file_function")
     
