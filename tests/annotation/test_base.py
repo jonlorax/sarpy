@@ -871,3 +871,178 @@ class test_annotationcollection(unittest.TestCase):
 
         self.assertEqual(obj.__getitem__(1).geometry.coordinates.tolist(), [1, 1])
     
+class test_fileannotationcollection(unittest.TestCase):
+    def setUp(self):
+        self.geometryproperties_obj = GeometryProperties(uid="abcd", name="efgh", color="blue")
+
+        self.test_parameter_point = Point((0,0))
+
+        self.annotation_properties_obj = AnnotationProperties(
+            name = "annotation1",
+            description = "abcd",
+            directory = "path/folder",
+            geometry_properties = [self.geometryproperties_obj],
+            parameters = self.test_parameter_point
+        )
+
+        self.geom_dict = {
+                        "type": "Point",
+                        "coordinates": [0, 0]
+                     }
+        self.geometry_obj = GeometryObject.from_dict(self.geom_dict)
+    
+        self.annotation_feature_obj = AnnotationFeature(geometry=self.geometry_obj, properties=self.annotation_properties_obj)
+
+        self.annotation_collection_obj =  AnnotationCollection(features=[self.annotation_feature_obj])
+
+        # new_annotation_properties_obj = AnnotationProperties(
+        #     name = "annotation2",
+        #     description = "efgh",
+        #     directory = "path/folder2",
+        # )
+
+        # new_geom_dict = {
+        #         "type": "Point",
+        #         "coordinates": [1, 1]
+        #         }
+        # new_geometry_obj = GeometryObject.from_dict(new_geom_dict)
+    
+        # self.annotation_feature_obj2 = AnnotationFeature(geometry=new_geometry_obj, properties=new_annotation_properties_obj)
+
+        # self.geom_dict2 = {
+        #                 "type": "Point",
+        #                 "coordinates": [1, 1]
+        #              }
+        # self.geometry_obj2 = GeometryObject.from_dict(self.geom_dict2)
+        
+        self.annotation_collection = AnnotationCollection(features=[self.annotation_feature_obj])
+        
+        # self.annotation_collection_obj_multifeature = AnnotationCollection(features=[self.annotation_feature_obj, self.annotation_feature_obj2])
+
+        version = "test_version"
+        annotations = self.annotation_collection_obj
+        image_file_name = "test_image_file_name"
+        image_id = "test_image_id"
+        core_name = "test_core_name"
+
+        self.file_annotation_collection_obj = FileAnnotationCollection(version=version, annotations=annotations, image_file_name=image_file_name, image_id=image_id, core_name=core_name)
+    
+    def fileannotationcollection_initialization(self):
+        _version = "test_version"
+        _annotations = self.annotation_collection_obj
+        _image_file_name = "test_image_file_name"
+        _image_id = "test_image_id"
+        _core_name = "test_core_name"
+
+        obj = FileAnnotationCollection(version=_version, annotations=_annotations, image_file_name=_image_file_name, image_id=_image_id, core_name=_core_name)
+        
+        self.assertEqual(obj.version, _version)
+        self.assertEqual(obj.anotations, _annotations)
+        self.assertEqual(obj.image_file_name, _image_file_name)
+        self.assertEqual(obj.image_id, _image_id)
+        self.assertEqual(obj.core_name, _core_name)
+        
+    def fileannotationcollection_none_initialization(self):
+        obj = FileAnnotationCollection()
+
+        self.assertEqual(obj.version, "Base:1.0")    
+        self.assertIsNone(obj._annotations)
+        self.assertIsNone(obj._image_file_name)
+        self.assertIsNone(obj._image_id)
+        self.assertIsNone(obj._core_name)
+
+        # pick up the logger error
+
+    def fileannotationcollection_initialization_type_error(self):
+        _version = "test_version"
+        _annotations = self.annotation_collection_obj
+        _image_file_name = 1234
+        _image_id = "test_image_id"
+        _core_name = "test_core_name"
+
+        with pytest.raises(TypeError, match = re.escape("image_file_name must be a None or a string")):
+            obj = FileAnnotationCollection(version=_version, annotations=_annotations, image_file_name=_image_file_name, image_id=_image_id, core_name=_core_name)
+    
+    def fileannotationcollection_version_property(self):
+        obj = self.file_annotation_collection_obj
+        
+        self.assertEqual(obj.version, "test_version")
+
+    def fileannotationcollection_image_file_name_property(self):
+        obj = self.file_annotation_collection_obj
+        
+        self.assertEqual(obj.image_file_name, "test_image_file_name")
+
+    def fileannotationcollection_image_id_property(self):
+        obj = self.file_annotation_collection_obj
+        
+        self.assertEqual(obj.image_id, "test_image_id")
+    
+    def fileannotationcollection_core_name_property(self):
+        obj = self.file_annotation_collection_obj
+        
+        self.assertEqual(obj.core_name, "test_core_name")
+    
+    def fileannotationcollection_annotations_property(self):
+        obj = self.file_annotation_collection_obj
+
+        self.assertEqual(obj.annotations.features[0].geometry.coordinates.tolist(), [0, 0])
+        self.assertIsInstance(obj.annotations, AnnotationCollection)
+    
+    def fileannotationcollection_annotations_setter_none(self):
+        obj = self.file_annotation_collection_obj
+
+        obj.annotations = None
+
+        self.assertIsNone(obj.annotations)
+    
+    def fileannotationcollection_annotations_setter_annotation_collection(self):
+        obj = self.file_annotation_collection_obj
+
+        obj.annotations = self.annotation_collection
+
+        self.assertEqual(obj.annotations.features[0].geometry.coordinates.tolist(), [0, 0])
+        self.assertIsInstance(obj.annotations, AnnotationCollection)
+    
+    def fileannotationcollection_annotations_setter_dict(self):
+        return
+    
+    def fileannotationcollection_annotations_setter_type_error(self):
+        return
+    
+    def fileannotationcollection_add_annotation_dict(self):
+        return
+    
+    def fileannotationcollection_add_annotation_type_error(self):
+        return
+    
+    def fileannotationcollection_add_annotation_none(self):
+        return
+    
+    def fileannotationcollection_add_annotation_annotationfeature(self):
+        return
+    
+    def fileannotationcollection_delete_annotation(self):
+        return
+    
+    def fileannotationcollection_from_file(self):
+        return
+    
+    def fileannotationcollection_from_dict_non_dict(self):
+        return
+    
+    def fileannotationcollection_from_dict_value_error(self):
+        return
+    
+    def fileannotationcollection_from_dict(self):
+        return
+
+    def fileannotationcollection_to_dict_none(self):
+        return
+    
+    def fileannotationcollection_to_dict(self):
+        return
+    
+    def fileannotationcollection_to_file(self):
+        return
+    
