@@ -340,7 +340,7 @@ class DTEDReader(object):
                 raise ValueError('Cannot slice on more than 2 dimensions')
             if len(item) == 2:
                 # if someone sending in bool for no_voids
-                if isinstance( itme[1], bool ):
+                if isinstance( item[1], bool ):
                     no_voids = item[1]
                     item     = item[0] # the row/col tuple is first now looks like before
             it = item[1]
