@@ -744,7 +744,7 @@ class DTEDInterpolator(DEMInterpolator):
             The elevation relative to the WGS-84 ellipsoid.
         """
 
-        return self.get_elevation_geoid(lat, lon, block_size=block_size, no_voids) + \
+        return self.get_elevation_geoid(lat, lon, block_size=block_size, no_voids=no_voids) + \
             self._geoid.get(lat, lon, block_size=block_size)
 
     def get_elevation_geoid(self, lat, lon, block_size=50000, no_voids=False):
