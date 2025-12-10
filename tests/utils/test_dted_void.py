@@ -24,7 +24,7 @@ test_data = tests.find_test_data_files(pathlib.Path(__file__).parent / "geoid.js
 
 parent_path = os.environ.get('SARPY_TEST_PATH', None)
 
-# @pytest.mark.skipif(egm96_file is None, reason="EGM 96 data does not exist")
+@pytest.mark.skipif(not test_data["dted_with_null"], reason="DTED with null data does not exist")
 def test_check_for_voids_by_file_true():
     quickCheck = check_for_voids( test_data['dted_with_null'][4] ) 
     # just grab basename off filepath and rebuild the result dict
@@ -49,7 +49,7 @@ def test_check_for_voids_by_file_true():
     assert newResults == fullAnswer
 
 
-# @pytest.mark.skipif(egm96_file is None, reason="EGM 96 data does not exist")
+@pytest.mark.skipif(not test_data["dted_with_null"], reason="DTED with null data does not exist")
 def test_check_for_voids_by_list_of_files_true():
     test_data      = tests.find_test_data_files(pathlib.Path(__file__).parent / "geoid.json")
     quickCheck = check_for_voids(   [ test_data['dted_with_null'][1], test_data['dted_with_null'][4] ] )
@@ -66,7 +66,7 @@ def test_check_for_voids_by_list_of_files_true():
     assert newResults == quickAnswer
 
 
-# @pytest.mark.skipif(egm96_file is None, reason="EGM 96 data does not exist")
+@pytest.mark.skipif(not test_data["dted_with_null"], reason="DTED with null data does not exist")
 def test_check_for_voids_by_dir_true():
     # check_for_voids(   "c:\\Users\\JohnO'Neill\\Downloads\\dem\\dted\\"  )
     quickCheck = check_for_voids(  os.path.join( parent_path, "dem", "dted" ))  # c:\\Users\\JohnO'Neill\\Downloads\\dem\\dted\\"  )
@@ -81,7 +81,7 @@ def test_check_for_voids_by_dir_true():
 
     
     
-# @pytest.mark.skipif(egm96_file is None, reason="EGM 96 data does not exist")
+@pytest.mark.skipif(not test_data["dted_with_null"], reason="DTED with null data does not exist")
 def test_check_for_voids_by_file_false():
     quickCheck = check_for_voids(  test_data['dted_with_null'][5] )
     # just grab basename off filepath and rebuild the result dict
