@@ -7,7 +7,7 @@ __author__ = "Thomas McCullough"
 
 import numpy
 from typing   import Union, Tuple, Sequence, Dict, Optional
-from warnings import deprecated
+from deprecated import deprecated
 
 from sarpy.io.general.base                 import BaseReader
 from sarpy.io.general.data_segment         import DataSegment
