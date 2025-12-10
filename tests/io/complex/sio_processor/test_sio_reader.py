@@ -19,7 +19,7 @@ class test_sio_reader(TestCase):
 
     def test_read_float_32(self):
         input_sio_reader_32 = "./tests/io/complex/sio_processor/SIOReaderTest_32.sio"
-        image_data = numpy.arange(13*17*2, dtype=numpy.float32).reshape(13, 17,2)
+        image_data = numpy.arange(13*17, dtype=numpy.float32).reshape(13, 17)
         example_sicd = sicd_meta_real_32 = SICDType(
             ImageData=ImageDataType(
                 NumRows=image_data.shape[0],
@@ -31,8 +31,8 @@ class test_sio_reader(TestCase):
                         NumRows=image_data.shape[0],
                         NumCols=image_data.shape[1]
                     ),
-                    SCPPixel=RowColType(Row=image_data.shape[0] // 2, 
-                                        Col=image_data.shape[1] // 2)
+                    SCPPixel=RowColType(Row=image_data.shape[0], 
+                                        Col=image_data.shape[1])
             ),
         ) 
         sio_reader = SIOReader(str(input_sio_reader_32))
@@ -42,7 +42,7 @@ class test_sio_reader(TestCase):
 
     def test_read_int_16(self):
         input_sio_reader_16 = "./tests/io/complex/sio_processor/SIOReaderTest_16.sio"
-        image_data = numpy.arange(13*17*2, dtype=numpy.int16).reshape(13, 17,2)
+        image_data = numpy.arange(13*17, dtype=numpy.int16).reshape(13, 17)
         example_sicd = SICDType(
             ImageData=ImageDataType(
                 NumRows=image_data.shape[0],
@@ -54,8 +54,8 @@ class test_sio_reader(TestCase):
                         NumRows=image_data.shape[0],
                         NumCols=image_data.shape[1]
                     ),
-                    SCPPixel=RowColType(Row=image_data.shape[0] // 2, 
-                                        Col=image_data.shape[1] // 2)
+                    SCPPixel=RowColType(Row=image_data.shape[0], 
+                                        Col=image_data.shape[1])
             ),
         )
         sio_reader = SIOReader(str(input_sio_reader_16))
@@ -65,7 +65,7 @@ class test_sio_reader(TestCase):
         
     def test_read_complex_64(self):
         input_sio_reader_complex = "./tests/io/complex/sio_processor/SIOReaderTest_complex.sio"
-        image_data = numpy.arange(13*17*2, dtype=numpy.complex64).reshape(13, 17,2)
+        image_data = numpy.arange(13*17, dtype=numpy.complex64).reshape(13, 17)
         example_sicd = SICDType(
             ImageData=ImageDataType(
                 NumRows=image_data.shape[0],
@@ -77,8 +77,8 @@ class test_sio_reader(TestCase):
                         NumRows=image_data.shape[0],
                         NumCols=image_data.shape[1]
                     ),
-                    SCPPixel=RowColType(Row=image_data.shape[0] // 2, 
-                                        Col=image_data.shape[1] // 2)
+                    SCPPixel=RowColType(Row=image_data.shape[0], 
+                                        Col=image_data.shape[1])
             ),
         )
         sio_reader = SIOReader(str(input_sio_reader_complex))
