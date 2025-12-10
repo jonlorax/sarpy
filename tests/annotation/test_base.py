@@ -650,14 +650,12 @@ class test_annotationfeature(unittest.TestCase):
         # create mismatch: add an extra property manually
         obj.properties.add_geometry_property(GeometryProperties())
 
-        logger_name = obj.__module__
-
         expected_warning = (
             "There are 1 geometry elements defined and 2 geometry properties populated. "
             "This is likely to cause problems."
         )
 
-        with self.assertLogs(logger_name, level="WARNING") as context_manager:
+        with self.assertLogs('sarpy.annotation.base', level="WARNING") as context_manager:
             # add another geometry to triggers the mismatch warning
             obj.add_geometry_element(
                 GeometryObject.from_dict(self.geom_dict)
@@ -668,7 +666,7 @@ class test_annotationfeature(unittest.TestCase):
             any(expected_warning in msg for msg in context_manager.output),
             "Expected geometry/property mismatch warning not logged"
         )
-    
+
     def test_annotationfeature_remove_geometry_element(self):
         obj = self.annotation_feature_obj
         geom_dict = {
@@ -913,6 +911,75 @@ class test_annotationcollection(unittest.TestCase):
         item = obj.__getitem__(1)
         self.assertEqual(item.geometry.coordinates.tolist(), [1, 1])
     
+    def test_annotation_collection_from_dict(self):
+        dict = {
+            "type": "AnnotationCollection",
+            "features": [
+                            {
+                                "type": "AnnotationFeature",
+                                "geometry": {
+                                            "type": "Point",
+                                            "coordinates": [1, 1]
+                                        },
+                                "properties": {
+                                    "type": "AnnotationProperties",
+                                    "name": "annotation3",
+                                    "description": "new description",
+                                    "directory": "new path"
+                                }
+                            }
+                        ]
+        }
+
+        obj = AnnotationCollection.from_dict(dict)
+
+        self.assertIsInstance(obj, AnnotationCollection)
+        self.assertEqual(len(obj.features), 1)
+        self.assertEqual(obj.features[0].geometry.coordinates.tolist(), [1, 1])
+
+    def test_annotation_collection_from_dict_type_error(self):
+        with pytest.raises(TypeError, match = re.escape("This requires a dict. Got type <class 'int'>")):
+            AnnotationCollection.from_dict(1234)
+
+    def test_annotation_collection_from_dict_key_error(self):
+        dict = {"features": [
+                            {
+                                "type": "AnnotationFeature",
+                                "geometry": {
+                                            "type": "Point",
+                                            "coordinates": [1, 1]
+                                        },
+                                "properties": {
+                                    "type": "AnnotationProperties",
+                                    "name": "annotation3",
+                                    "description": "new description",
+                                    "directory": "new path"
+                                }
+                            }
+                        ]
+                }
+
+        with pytest.raises(KeyError, match = re.escape("the json requires the field 'type'")):
+            AnnotationCollection.from_dict(dict)
+        
+    def test_annotation_collection_from_dict_none_features(self):
+        dict = {
+            "type": "AnnotationCollection",
+            "features": None
+        }
+         
+        obj = AnnotationCollection.from_dict(dict)
+        self.assertIsNone(obj.features)
+    
+    def test_annotation_collection_from_dict_value_error(self):
+        dict = {
+            "type": "incorrect_type",
+            "features": []
+        }
+
+        with pytest.raises(ValueError, match = re.escape("AnnotationCollection cannot be constructed from incorrect_type, expecting AnnotationCollection")):
+            AnnotationCollection.from_dict(dict)
+
 class test_fileannotationcollection(unittest.TestCase):
     def setUp(self):
         self.geometryproperties_obj = GeometryProperties(uid="abcd", name="efgh", color="blue")
@@ -957,25 +1024,29 @@ class test_fileannotationcollection(unittest.TestCase):
         obj = FileAnnotationCollection(version=_version, annotations=_annotations, image_file_name=_image_file_name, image_id=_image_id, core_name=_core_name)
         
         self.assertEqual(obj.version, _version)
-        self.assertEqual(obj.anotations, _annotations)
+        self.assertEqual(obj.annotations, _annotations)
         self.assertEqual(obj.image_file_name, _image_file_name)
         self.assertEqual(obj.image_id, _image_id)
         self.assertEqual(obj.core_name, _core_name)
         
     def test_fileannotationcollection_none_initialization(self):
-        obj = FileAnnotationCollection()
+        with self.assertLogs('sarpy.annotation.base', level='ERROR') as context_manager:
+            obj = FileAnnotationCollection(image_file_name=None, image_id=None, core_name=None)
 
+        # check that the expected error message is in the logs
+        self.assertTrue(
+            any(
+                "One of image_file_name, image_id, or core_name should be defined"
+                in msg for msg in context_manager.output
+            ),
+            "Expected error log not found"
+        )
+        
         self.assertEqual(obj.version, "Base:1.0")    
         self.assertIsNone(obj._annotations)
         self.assertIsNone(obj._image_file_name)
         self.assertIsNone(obj._image_id)
         self.assertIsNone(obj._core_name)
-
-        # pick up the logger error
-        with self.assertLogs(__name__) as context_manager:
-            obj.validate_configuration(image_file_name=None, image_id=None, core_name=None)
-        
-        self.assertIn("One of image_file_name, image_id, or core_name should be defined", context_manager.output[0])
 
     def test_fileannotationcollection_initialization_type_error(self):
         _version = "test_version"
@@ -1049,7 +1120,7 @@ class test_fileannotationcollection(unittest.TestCase):
         }
         
         obj = self.file_annotation_collection_obj
-        obj.annotations(dict)
+        obj.annotations = dict
 
         self.assertEqual(obj.annotations.features[0].geometry.coordinates.tolist(), [1, 1])
         self.assertIsInstance(obj.annotations, AnnotationCollection)
@@ -1077,9 +1148,11 @@ class test_fileannotationcollection(unittest.TestCase):
 
         obj = self.file_annotation_collection_obj
 
+        self.assertEqual(len(obj.annotations), 1)
+
         obj.add_annotation(features_dict)
 
-        self.assertEqual()
+        self.assertEqual(len(obj.annotations), 2)
     
     def test_fileannotationcollection_add_annotation_type_error(self):
         obj = self.file_annotation_collection_obj
@@ -1090,27 +1163,49 @@ class test_fileannotationcollection(unittest.TestCase):
     def test_fileannotationcollection_add_annotation_none(self):
         obj = FileAnnotationCollection()
 
-        obj.add_annotation(None)
+        obj.add_annotation(self.annotation_feature_obj)
 
-        self.assertIsNone(obj.annotations)
+        self.assertIsInstance(obj._annotations, AnnotationCollection)
     
     def test_fileannotationcollection_add_annotation_annotationfeature(self):
-        obj = FileAnnotationCollection()
+        obj = self.file_annotation_collection_obj
+
+        self.assertEqual(len(obj.annotations), 1)
 
         obj.add_annotation(self.annotation_feature_obj)
 
-        self.assertEqual()
+        self.assertEqual(len(obj.annotations), 2)
     
     def test_fileannotationcollection_delete_annotation(self):
         obj = self.file_annotation_collection_obj
 
-        # obj.delete_annotation() # find out what i should be using for annotation id
-    
-    def test_fileannotationcollection_from_file(self):
-        # create json file for this test
+        # confirms the number of annotations is 1
+        self.assertEqual(len(obj.annotations), 1)
 
-        return
-    
+        # adds an annotation so that there are 2 total
+        obj.add_annotation(self.annotation_feature_obj)
+
+        # confirms that there are 2 annotations
+        self.assertEqual(len(obj.annotations), 2)
+
+        # gets the annotation id for the added object
+        annotation_id = self.annotation_feature_obj.uid
+
+        # deletes the annotation by id
+        obj.delete_annotation(annotation_id) # find out what i should be using for annotation id
+
+        # confirms that the annotation is successfully deleted
+        self.assertEqual(len(obj.annotations), 1)
+
+    def test_fileannotationcollection_from_file(self):
+        obj = FileAnnotationCollection.from_file("tests/annotation/fileannotationcollection_from_file_test.json")
+
+        self.assertIsInstance(obj, FileAnnotationCollection)
+        self.assertEqual(obj.version, "test_version")
+        self.assertEqual(obj.image_file_name, "test_image_file_name")
+        self.assertEqual(obj.image_id, "test_image_id")
+        self.assertEqual(obj.core_name, "test_core_name")
+
     def test_fileannotationcollection_from_dict_non_dict(self):
         with pytest.raises(TypeError, match = re.escape("This requires a dict. Got type <class 'int'>")):
             obj = FileAnnotationCollection.from_dict(1234)
@@ -1124,35 +1219,73 @@ class test_fileannotationcollection(unittest.TestCase):
             obj = FileAnnotationCollection.from_dict(dict)
     
     def test_fileannotationcollection_from_dict(self):
-        return
+        dict = {
+                "type": "FileAnnotationCollection",
+                "version": "test_version",
+                "image_file_name": "test_image_file_name",
+                "image_id": "test_image_id",
+                "core_name": "test_core_name",
+                "annotations": {
+                    "type": "AnnotationCollection",
+                    "features": [
+                            {
+                                "type": "AnnotationFeature",
+                                "id": "10dfc96e-ed21-4214-99bf-6543f079acff",
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": [
+                                            0.0,
+                                            0.0
+                                        ]
+                                    },
+                                "properties": {
+                                "type": "AnnotationProperties",
+                                "name": "annotation1",
+                                "description": "abcd",
+                                "directory": "path/folder",
+                                "geometry_properties": [
+                                        {
+                                            "type": "GeometryProperties",
+                                            "uid": "abcd",
+                                            "name": "efgh",
+                                            "color": "blue"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+        
+        obj = FileAnnotationCollection.from_dict(dict)
+       
+        self.assertIsInstance(obj, FileAnnotationCollection)
+        self.assertEqual(obj.version, "test_version")
+        self.assertEqual(obj.image_file_name, "test_image_file_name")
+        self.assertEqual(obj.image_id, "test_image_id")
+        self.assertEqual(obj.core_name, "test_core_name")
 
     def test_fileannotationcollection_to_dict_none(self):
         obj = FileAnnotationCollection()
 
         return_dict = obj.to_dict()
 
-        self.assertEqual(return_dict.type, "FileAnnotationCollection")
-        self.assertEqual(return_dict.version, "Base:1.0")   
+        self.assertEqual(return_dict.get("type"), "FileAnnotationCollection")
+        self.assertEqual(return_dict.get("version"), "Base:1.0")   
     
     def test_fileannotationcollection_to_dict(self):
         obj = self.file_annotation_collection_obj
 
         return_dict = obj.to_dict()
 
-        version = "test_version"
-        annotations = self.annotation_collection_obj
-        image_file_name = "test_image_file_name"
-        image_id = "test_image_id"
-        core_name = "test_core_name"
-
-        self.assertEqual(return_dict.type, "FileAnnotationCollection")
-        self.assertEqual(return_dict.image_file_name, "test_image_fil_name")
-        self.assertEqual(return_dict.version, "test_version"),
-        self.assertEqual(return_dict.image_id, "test_image_id")
-        self.assertEqual(return_dict.core_name, "test_core_name")
+        self.assertEqual(return_dict.get("type"), "FileAnnotationCollection")
+        self.assertEqual(return_dict.get("image_file_name"), "test_image_file_name")
+        self.assertEqual(return_dict.get("version"), "test_version"),
+        self.assertEqual(return_dict.get("image_id"), "test_image_id")
+        self.assertEqual(return_dict.get("core_name"), "test_core_name")
 
         test_annotation = self.annotation_collection_obj.to_dict()
-        self.assertEqual(return_dict.annotations, test_annotation)
+        self.assertEqual(return_dict.get("annotations"), test_annotation)
     
     def test_fileannoationcollection_to_dict_with_parent_dict(self):
         parent_dict = {
@@ -1166,17 +1299,17 @@ class test_fileannotationcollection(unittest.TestCase):
         self.file_annotation_collection_obj.to_dict(parent_dict)
 
         # fields should be updated from the file_annotation_collection_obj
-        self.assertEqual(parent_dict.type, "FileAnnotationCollection")
-        self.assertEqual(parent_dict.image_file_name, "test_image_file_name")
-        self.assertEqual(parent_dict.version, "test_version"),
-        self.assertEqual(parent_dict.image_id, "test_image_id")
-        self.assertEqual(parent_dict.core_name, "test_core_name")
+        self.assertEqual(parent_dict.get("type"), "FileAnnotationCollection")
+        self.assertEqual(parent_dict.get("image_file_name"), "test_image_file_name")
+        self.assertEqual(parent_dict.get("version"), "test_version"),
+        self.assertEqual(parent_dict.get("image_id"), "test_image_id")
+        self.assertEqual(parent_dict.get("core_name"), "test_core_name")
 
         test_annotation = self.annotation_collection_obj.to_dict()
-        self.assertEqual(parent_dict.annotations, test_annotation)
+        self.assertEqual(parent_dict.get("annotations"), test_annotation)
     
     def test_fileannotationcollection_to_file(self):
         obj = self.file_annotation_collection_obj
 
-        obj.to_file("test_fileannotationcollection_to_file_function")
+        obj.to_file("tests/annotation/test_fileannotationcollection_to_file_function")
     

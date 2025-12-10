@@ -5,11 +5,11 @@
  "image_id": "test_image_id",
  "core_name": "test_core_name",
  "annotations": {
-  "type": "FeatureCollection",
+  "type": "AnnotationCollection",
   "features": [
    {
     "type": "AnnotationFeature",
-    "id": "a273ca65-18fb-46b9-a912-b5530b03731b",
+    "id": "10dfc96e-ed21-4214-99bf-6543f079acff",
     "geometry": {
      "type": "Point",
      "coordinates": [
@@ -29,14 +29,7 @@
        "name": "efgh",
        "color": "blue"
       }
-     ],
-     "parameters": {
-      "type": "Point",
-      "coordinates": [
-       0.0,
-       0.0
-      ]
-     }
+     ]
     }
    }
   ]

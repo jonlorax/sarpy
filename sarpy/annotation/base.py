@@ -613,16 +613,16 @@ class AnnotationFeature(Feature):
         self._geometry = self._validate_geometry_element(
             basic_assemble_from_collection(self.geometry, geometry))
 
-        # add the geometry property
-        self.properties.add_geometry_property(properties)
-
-        # check that they are in sync
+        # check that they are in sync and warns before adding the geometry element
         if len(self.properties.geometry_properties) != self.geometry_count:
             logger.warning(
                 'There are {} geometry elements defined\n\t'
                 'and {} geometry properties populated. '
                 'This is likely to cause problems.'.format(
                     self.geometry_count, len(self.properties.geometry_properties)))
+
+         # add the geometry property
+        self.properties.add_geometry_property(properties)
 
     def remove_geometry_element(self, item):
         """
@@ -672,6 +672,7 @@ class AnnotationCollection(FeatureCollection):
     An extension of the FeatureCollection class which has the features are
     AnnotationFeature instances.
     """
+    _type = "AnnotationCollection"
 
     @property
     def features(self):
@@ -728,6 +729,27 @@ class AnnotationCollection(FeatureCollection):
             index = self._feature_dict[item]
             return self._features[index]
         return self._features[item]
+    
+    @classmethod
+    def from_dict(cls, the_json):
+        if not isinstance(the_json, dict):
+            raise TypeError('This requires a dict. Got type {}'.format(type(the_json)))
+
+        typ = the_json.get('type', None) # prevents key error from being thrown if 'type' isn't in the_json
+        
+        if typ is None:
+            raise KeyError("the json requires the field 'type'")
+
+        if typ != cls._type:
+            raise ValueError('AnnotationCollection cannot be constructed from {}, expecting {}'.format(typ, cls._type))
+
+        features = the_json.get('features', None)
+        if features is None:
+            feature_list = None
+        else:
+            feature_list = [AnnotationFeature.from_dict(entry) for entry in features]
+
+        return cls(features=feature_list)
 
 
 class FileAnnotationCollection(Jsonable):
