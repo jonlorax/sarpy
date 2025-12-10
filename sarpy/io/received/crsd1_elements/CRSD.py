@@ -8,7 +8,7 @@ __author__ = ("Thomas McCullough", "Michael Stewart, Valkyrie")
 import numpy
 from collections import OrderedDict
 from typing      import Union
-from warnings    import deprecated
+from deprecated  import deprecated
 from xml.etree   import ElementTree
 
 from sarpy.io.complex.sicd_elements.MatchInfo          import MatchInfoType

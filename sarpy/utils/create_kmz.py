@@ -13,7 +13,7 @@ __author__ = "Thomas McCullough"
 import argparse
 import logging
 import os
-from warnings    import deprecated
+from deprecated import deprecated
 
 import sarpy
 from sarpy.io.complex.converter import open_complex

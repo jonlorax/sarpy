@@ -11,7 +11,7 @@ import numpy
 import os
 from collections import OrderedDict
 from typing      import Union, Tuple, List, Sequence, Dict, BinaryIO, Optional
-from warnings    import deprecated
+from deprecated import deprecated
 
 from sarpy.io.general.base          import BaseReader, SarpyIOError
 from sarpy.io.general.data_segment  import DataSegment, NumpyMemmapSegment

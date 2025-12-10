@@ -6,7 +6,7 @@ __classification__ = "UNCLASSIFIED"
 __author__ = ("Thomas McCullough", "Michael Stewart, Valkyrie")
 
 from typing   import List
-from warnings import deprecated
+from deprecated import deprecated
 
 from sarpy.io.xml.base        import Serializable
 from sarpy.io.xml.descriptors import StringDescriptor, StringEnumDescriptor, \

@@ -8,7 +8,7 @@ __author__ = "Valkyrie Systems Corporation"
 import logging
 import numpy as np
 import os
-from warnings    import deprecated
+from deprecated import deprecated
 
 import sarpy.visualization.cphd_kmz_product_creation as cphd_kpc
 from sarpy.visualization import kmz_utils
