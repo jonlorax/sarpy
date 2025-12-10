@@ -2693,7 +2693,9 @@ class SubheaderManager(object):
                 'item_bytes input has size {},\n\t'
                 'but item_size has been defined as {}.'.format(len(value), self._item_size))
         self._item_bytes = value
-        self.item_size = len(value)
+        if self._item_size is None or self.item_size != len(value):
+            self.item_size = len(value)
+        
 
     @property
     def item_written(self) -> bool:
@@ -4125,9 +4127,7 @@ class NITFWriter(BaseWriter):
 
     def flush(self, force: bool = False) -> None:
         self._validate_closed()
-
         BaseWriter.flush(self, force=force)
-
         try:
             if self._in_memory:
                 if self._image_segment_data_segments is not None:
