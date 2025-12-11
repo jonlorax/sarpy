@@ -319,7 +319,7 @@ class DTEDReader(object):
 
         return numpy.copy(self._bounding_box)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item, no_voids=False):
         def new_col_int(val, begin):
             if val is None:
                 if begin:
@@ -328,13 +328,12 @@ class DTEDReader(object):
                     return -2
             return val + 4 if val >= 0 else val - 2
 
-        # we need to manipulate in the second dimension
-        # adding the no_voids option
-        # incoming item will still be a tuple but a tuple with a bool
+        # we need to manipulate in the second dimension to adust index to get proper cel
+        # adding the no_voids to get to change repair_values
+        # incoming item will still be a row/col tuple but a tuple with a bool
         # so:
         #     ( <row>, <col> )  as has been happening for years
         #     (( <row>, <col> ), bool)  with the bool for no_voids
-        no_voids = False
         if isinstance(item, tuple):
             if len(item) > 2:
                 raise ValueError('Cannot slice on more than 2 dimensions')
