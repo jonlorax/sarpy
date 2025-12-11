@@ -83,15 +83,7 @@ class SIOReader(object):
             self._user_data      = self._fid.read(
                 self._user_data_size).decode("utf-8")
             self._sicdmeta       = SICDType.from_xml_string(self._user_data)
-        if self._magic_key in [0xFF017FFE, 0xFF027FFD]:
-            # SIO file image data written as big endian
-            self._image_data  = numpy.frombuffer(self._fid.read(),
-                                                     dtype=self._data_type_str
-                                                     ).reshape(self._rows,
-                                                               self._columns)
-        elif self._magic_key in [0xFE7F01FF, 0xFD7F02FF]:
-            # SIO file image data written as little endian
-            # Reverse the bytes ingested from little endian to big
+        if self._magic_key in [0xFF017FFE, 0xFF027FFD, 0xFE7F01FF, 0xFD7F02FF]:
             self._image_data  = numpy.frombuffer(self._fid.read(),
                                                      dtype=self._data_type_str
                                                      ).reshape(self._rows,
