@@ -108,7 +108,6 @@ class SIOWriter(object):
         
         # The default SIO header is 20 bytes
         # It is comprised of 5 uint32 words, which are 4 bytes
-        self._header_skip            = 20
         # Determine the endianness of the system
         self._endianness = sys.byteorder
         # Check dtype of _image_data numpy array incase the endianness was set  
@@ -117,10 +116,7 @@ class SIOWriter(object):
             self._endianness = 'little'
         if self._image_data.dtype.byteorder == '>':
             self._endianness = 'big'
-        # Set the magic key and increase the _header_skip if there is user data.
         if self._sicdmeta_xml_bytes is not None and self._include_sicd_metadata:
-            self._header_skip = self._header_skip + 4 + 4 + 8 + 4 + \
-                len(self._sicdmeta_xml_bytes) # Add user data length
             if self._endianness == "big":
                 self._magic_key   = 0xFF027FFD # Indicates big endian, with user-data
             else:
