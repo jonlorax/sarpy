@@ -32,7 +32,7 @@ class GeometryProperties(Jsonable):
         if uid is None:
             uid = str(uuid4())
         if not isinstance(uid, str):
-            raise TypeError('uid must be a string')
+            raise TypeError('uid must be a string, got {}'.format(type(uid)))
         self._uid = uid
 
         self.name = name
@@ -59,7 +59,7 @@ class GeometryProperties(Jsonable):
         if value is None or isinstance(value, str):
             self._name = value
         else:
-            raise TypeError('Got unexpected type for name')
+            raise TypeError('Got unexpected type of {} for name'.format(type(value)))
 
     @property
     def color(self):
@@ -74,7 +74,7 @@ class GeometryProperties(Jsonable):
         if value is None or isinstance(value, str):
             self._color = value
         else:
-            raise TypeError('Got unexpected type for color')
+            raise TypeError('Got unexpected type of {} for color'.format(type(value)))
 
     @classmethod
     def from_dict(cls, the_json):
@@ -921,7 +921,8 @@ class FileAnnotationCollection(Jsonable):
 
         typ = the_dict.get('type', 'NONE')
         if typ != cls._type:
-            raise ValueError('FileAnnotationCollection cannot be constructed from the input dictionary')
+            raise ValueError('FileAnnotationCollection cannot be constructed from {}, expecting {}'.format(typ, cls._type))
+
 
         return cls(
             version=the_dict.get('version', 'UNKNOWN'),

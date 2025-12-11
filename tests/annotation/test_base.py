@@ -14,6 +14,7 @@ class test_geometryproperties(unittest.TestCase):
         self.assertIsInstance(geom.uid, str)
 
         try:
+            # checks if uuid generated is a valid uuid
             UUID(geom.uid)
         except:
             pytest.fail("The generated uid is not a valid UUID string")
@@ -22,42 +23,50 @@ class test_geometryproperties(unittest.TestCase):
         # confirms that that the uid setter works as expected
         custom_uid = "abcd"
         geom = GeometryProperties(uid=custom_uid)
+
         self.assertEqual(geom.uid, custom_uid)
 
     def test_geometryproperties_invalid_uid(self):
         custom_uid = 1234
+
         with pytest.raises(TypeError, 
-                            match = re.escape("uid must be a string")):
+                            match = re.escape("uid must be a string, got <class 'int'>")):
             geom = GeometryProperties(uid=custom_uid)
 
     def test_geometryproperties_default_name(self):
         geom = GeometryProperties()
+
         self.assertIsNone(geom.name)
 
     def test_geometryproperties_custom_name(self):
         custom_name = "abcd"
         geom = GeometryProperties(name=custom_name)
+
         self.assertEqual(geom.name, custom_name)
 
     def test_geometryproperties_invalid_name(self):
         custom_name = 1234
+
         with pytest.raises(TypeError, 
-                            match = re.escape("Got unexpected type for name")):
+                            match = re.escape("Got unexpected type of <class 'int'> for name")):
             geom = GeometryProperties(name=custom_name)
 
     def test_geometryproperties_default_color(self):
         geom = GeometryProperties()
+
         self.assertIsNone(geom.color)
 
     def test_geometryproperties_custom_color(self):
         custom_color = "abcd"
         geom = GeometryProperties(color=custom_color)
+
         self.assertEqual(geom.color, custom_color)
 
     def test_geometryproperties_invalid_color(self):
         custom_color = 1234
+
         with pytest.raises(TypeError, 
-                            match = re.escape("Got unexpected type for color")):
+                            match = re.escape("Got unexpected type of <class 'int'> for color")):
             geom = GeometryProperties(color=custom_color)
 
     def test_geometryproperties_all_fields(self):
@@ -589,6 +598,8 @@ class test_annotationfeature(unittest.TestCase):
 
     def test_annotationfeature_validate_geometry_element_type_error(self):
         obj = self.annotation_feature_obj
+
+        # setting allowed geometries to only Polygon to force the TypeError
         obj._allowed_geometries = {Polygon}
 
         with pytest.raises(TypeError, match = re.escape('geometry (Point(**{\n "type": "Point",\n "coordinates": [\n  0.0,\n  0.0\n ]\n})) is not of one of the allowed types ({<class \'sarpy.geometry.geometry_elements.Polygon\'>})')):
@@ -597,6 +608,7 @@ class test_annotationfeature(unittest.TestCase):
     def test_annotationfeature_add_geometry_element_none(self):
         obj = AnnotationFeature()
 
+        # confirms the geometry_count is initially 0
         self.assertEqual(obj.geometry_count, 0)
 
         obj.add_geometry_element(self.geometry_obj)
@@ -609,7 +621,7 @@ class test_annotationfeature(unittest.TestCase):
         # confirms that the geometry element got added to the newly generated AnnotationProperty of this AnnotationFeature instance
         self.assertEqual(obj.geometry_count, 1)
    
-    def test_annotationfeature_add_geometry_element_none_properties(self): # line 607 ??
+    def test_annotationfeature_add_geometry_element_none_properties(self):
         obj = AnnotationFeature()
         obj.properties = None
 
@@ -639,7 +651,7 @@ class test_annotationfeature(unittest.TestCase):
         with pytest.raises(TypeError, match = re.escape("properties must be a GeometryProperties instance. Got <class 'str'>")):
             obj.add_geometry_element(self.geometry_obj, "abcd")
 
-    def test_annotationfeature_add_geometry_element_logger(self):
+    def test_annotationfeature_add_geometry_element_logger_warning(self):
         obj = AnnotationFeature()
         obj.geometry = GeometryCollection()
         obj.properties = AnnotationProperties()
@@ -1074,9 +1086,10 @@ class test_fileannotationcollection(unittest.TestCase):
     
     def test_fileannotationcollection_annotations_property(self):
         obj = self.file_annotation_collection_obj
+        annotations = obj.annotations
 
-        self.assertEqual(obj.annotations.features[0].geometry.coordinates.tolist(), [0, 0])
-        self.assertIsInstance(obj.annotations, AnnotationCollection)
+        self.assertEqual(annotations.features[0].geometry.coordinates.tolist(), [0, 0])
+        self.assertIsInstance(annotations, AnnotationCollection)
     
     def test_fileannotationcollection_annotations_setter_none(self):
         obj = self.file_annotation_collection_obj
@@ -1154,7 +1167,7 @@ class test_fileannotationcollection(unittest.TestCase):
         with pytest.raises(TypeError, match = re.escape("This requires an AnnotationFeature instance. Got <class 'int'>")):
             obj.add_annotation(1234)
     
-    def test_fileannotationcollection_add_annotation_none(self):
+    def test_fileannotationcollection_add_annotation_to_none(self):
         obj = FileAnnotationCollection()
 
         obj.add_annotation(self.annotation_feature_obj)
@@ -1209,7 +1222,7 @@ class test_fileannotationcollection(unittest.TestCase):
             "type": "incorrect_type"
         }
 
-        with pytest.raises(ValueError, match = re.escape("FileAnnotationCollection cannot be constructed from the input dictionary")):
+        with pytest.raises(ValueError, match = re.escape('FileAnnotationCollection cannot be constructed from incorrect_type, expecting FileAnnotationCollection')):
             obj = FileAnnotationCollection.from_dict(dict)
     
     def test_fileannotationcollection_from_dict(self):
