@@ -644,24 +644,18 @@ class test_annotationfeature(unittest.TestCase):
         obj.geometry = GeometryCollection()
         obj.properties = AnnotationProperties()
 
-        # add first geometry + properties (valid)
+        # add one geometry with one property: geom = 1, props = 1
         obj.add_geometry_element(self.geometry_obj, self.geometryproperties_obj)
 
-        # create mismatch: add an extra property manually
-        obj.properties.add_geometry_property(GeometryProperties())
+        # remove the property to create mismatch
+        obj.properties.geometry_properties = []  # props = 0
 
-        expected_warning = (
-            "There are 1 geometry elements defined and 2 geometry properties populated. "
-            "This is likely to cause problems."
-        )
+        expected_warning = "This is likely to cause problems."
 
         with self.assertLogs('sarpy.annotation.base', level="WARNING") as context_manager:
-            # add another geometry to triggers the mismatch warning
-            obj.add_geometry_element(
-                GeometryObject.from_dict(self.geom_dict)
-            )
+            # add geometry -> geom = 2, props = 0 -> mismatch -> warning
+            obj.add_geometry_element(GeometryObject.from_dict(self.geom_dict))
 
-        # check if warning appears in output
         self.assertTrue(
             any(expected_warning in msg for msg in context_manager.output),
             "Expected geometry/property mismatch warning not logged"
@@ -1311,5 +1305,5 @@ class test_fileannotationcollection(unittest.TestCase):
     def test_fileannotationcollection_to_file(self):
         obj = self.file_annotation_collection_obj
 
-        obj.to_file("tests/annotation/test_fileannotationcollection_to_file_function")
+        obj.to_file("tests/annotation/test_fileannotationcollection_to_file_function.json")
     

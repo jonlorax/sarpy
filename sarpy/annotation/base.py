@@ -251,7 +251,7 @@ class AnnotationProperties(Jsonable):
         if not isinstance(entry, GeometryProperties):
             raise TypeError(f'Got unexpected value of type {type(entry)} for geometry properties')
 
-        self._geometry_properties.append(entry)
+        self.geometry_properties.append(entry)
 
     def get_geometry_property(self, item):
         """
@@ -610,7 +610,7 @@ class AnnotationFeature(Feature):
             self.geometry = GeometryCollection()
 
         # handle the geometry
-        self._geometry = self._validate_geometry_element(
+        self.geometry = self._validate_geometry_element(
             basic_assemble_from_collection(self.geometry, geometry))
 
         # check that they are in sync and warns before adding the geometry element
