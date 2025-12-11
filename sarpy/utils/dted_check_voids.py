@@ -68,11 +68,10 @@ def check_for_voids(dtedFilePath, return_index=False ):
             
             # one can display dted data in QGIS
             # and can display individual cell values with the QGIS plugin Value Tool
-            #  see DTEDReader tests in tests/io/DEM/test_dted.py
-            #
+            #  see DTEDReader test_dted_reader in tests/io/DEM/test_dted.py
+            # to follow along in qgis
             # qgis_row = 1200 -  known_value[ 1 ] # dted1 data is in 1200 blocks
             # qgis_col = known_value[ 0 ]
-            #
             # 
             # Create a boolean mask
             mask = (value_to_check == dted_reader._mem_map)      
