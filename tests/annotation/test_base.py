@@ -278,6 +278,7 @@ class test_annotationproperties(unittest.TestCase):
         
         # confirms that the property was successfully added since the length increased
         self.assertEqual(len(obj.geometry_properties), 2)
+        self.assertEqual(obj.geometry_properties[1], geom_prop)
     
     def test_annotationproperties_add_geometry_property_invalid_type(self):
         with pytest.raises(TypeError, 
@@ -620,7 +621,8 @@ class test_annotationfeature(unittest.TestCase):
 
         # confirms that the geometry element got added to the newly generated AnnotationProperty of this AnnotationFeature instance
         self.assertEqual(obj.geometry_count, 1)
-   
+        self.assertEqual(obj.get_geometry_element(0), self.geometry_obj)   
+
     def test_annotationfeature_add_geometry_element_none_properties(self):
         obj = AnnotationFeature()
         obj.properties = None
@@ -632,13 +634,17 @@ class test_annotationfeature(unittest.TestCase):
         self.assertIsNone(obj.properties.description)
         self.assertIsNone(obj.properties.directory)
 
+        self.assertEqual(obj.get_geometry_element(0), self.geometry_obj)   
+
     def test_annotationfeature_add_geometry_element(self):
         obj = self.annotation_feature_obj
         self.assertEqual(obj.geometry_count, 1)
 
         obj.add_geometry_element(self.geometry_obj)
+
+        self.assertEqual(obj.get_geometry_element(1), self.geometry_obj)   
         self.assertEqual(obj.geometry_count, 2)
-    
+
     def test_annotationfeature_add_geometry_element_invalid_geomobject(self):
         obj = self.annotation_feature_obj
 
@@ -725,6 +731,9 @@ class test_annotationfeature(unittest.TestCase):
         obj.remove_geometry_element(1)
 
         self.assertEqual(obj.geometry_count, 2)
+
+        self.assertEqual(obj.get_geometry_element(0), self.geometry_obj)
+        self.assertEqual(obj.get_geometry_element(1), geometry_obj)
 
     def test_annotationfeature_from_dict(self):
         features_dict = {
@@ -870,14 +879,19 @@ class test_annotationcollection(unittest.TestCase):
 
     def test_annotationcollection_add_features(self):
         obj = self.annotation_collection_obj
+        
+        self.assertEqual(obj.features[0].geometry.coordinates.tolist(), [0, 0])
 
         obj.add_feature(self.annotation_feature_obj2)
 
         self.assertIsInstance(obj.features, list)
         self.assertEqual(len(obj.features), 2)
+        self.assertEqual(obj.features[1].geometry.coordinates.tolist(), [1, 1])
     
     def test_annotationcollection_add_features_dict(self):
         obj = self.annotation_collection_obj
+
+        self.assertEqual(obj.features[0].geometry.coordinates.tolist(), [0, 0])
 
         features_dict = {
             "type": "AnnotationFeature",
@@ -897,7 +911,8 @@ class test_annotationcollection(unittest.TestCase):
 
         self.assertIsInstance(obj.features, list)
         self.assertEqual(len(obj.features), 2)
-    
+        self.assertEqual(obj.features[1].geometry.coordinates.tolist(), [1, 1])
+
     def test_annotationcollection_add_invalid_feature(self):
         obj = self.annotation_collection_obj
 
@@ -1155,11 +1170,13 @@ class test_fileannotationcollection(unittest.TestCase):
 
         obj = self.file_annotation_collection_obj
 
+        self.assertEqual(obj.annotations.features[0].geometry.coordinates.tolist(), [0, 0])
         self.assertEqual(len(obj.annotations), 1)
 
         obj.add_annotation(features_dict)
 
         self.assertEqual(len(obj.annotations), 2)
+        self.assertEqual(obj.annotations.features[1].geometry.coordinates.tolist(), [1, 1])
     
     def test_fileannotationcollection_add_annotation_type_error(self):
         obj = self.file_annotation_collection_obj
@@ -1173,15 +1190,18 @@ class test_fileannotationcollection(unittest.TestCase):
         obj.add_annotation(self.annotation_feature_obj)
 
         self.assertIsInstance(obj._annotations, AnnotationCollection)
+        self.assertEqual(obj.annotations[0].geometry.coordinates.tolist(), [0, 0])
     
     def test_fileannotationcollection_add_annotation_annotationfeature(self):
         obj = self.file_annotation_collection_obj
 
+        self.assertEqual(obj.annotations.features[0].geometry.coordinates.tolist(), [0, 0])
         self.assertEqual(len(obj.annotations), 1)
 
         obj.add_annotation(self.annotation_feature_obj)
 
         self.assertEqual(len(obj.annotations), 2)
+        self.assertEqual(obj.annotations[1].geometry.coordinates.tolist(), [0, 0])
     
     def test_fileannotationcollection_delete_annotation(self):
         obj = self.file_annotation_collection_obj
