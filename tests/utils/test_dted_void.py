@@ -9,15 +9,7 @@ from sarpy.utils.dted_check_voids import check_for_voids
 import sarpy.io.DEM.DTED as sarpy_dted
 
 import tests
-# Note
-# Linux
-# export SARPY_TEST_PATH='/sar/CuratedData_SomeDomestic/sarpy_test/'
-#
-# windows
-# set SARPY_TEST_PATH=c:\Users\JohnO'Neill\Downloads\  # __DO NOT__ put quotes around it.  you're welcome
 
-# how to run:
-# python -m pytest tests\utils\test_dted_void_work.py
 
 # SARPY_TEST_PATH should be set first
 test_data = tests.find_test_data_files(pathlib.Path(__file__).parent / "geoid.json")
