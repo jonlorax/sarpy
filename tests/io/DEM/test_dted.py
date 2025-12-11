@@ -110,9 +110,15 @@ def test_joz_repair_values():
     array1 = np.array([1, 4, 2, 6, 3, 65535])
     dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][2])
     repaired = dted_reader._repair_values( array1 )
-    print( repaired)
+    print( "[1, 4, 2, 6, 3, 65535]  {}".format( repaired ))
+    
     repaired = dted_reader._repair_values( array1, True)
-    print( "trued: {}".format( repaired)    )
+    print( "[1, 4, 2, 6, 3, 65535] trued: {}".format( repaired)    )
+
+    special100 = np.uint16( 100 )
+    repaired = dted_reader._repair_values( special100, True)
+    print("100: {}".format( repaired ))
+
     array1[array1 == 65535 ] = 0
     print( array1)
 
