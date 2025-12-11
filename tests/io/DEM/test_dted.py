@@ -48,8 +48,8 @@ def test_dted_reader_south_west_ignore_voids():
     # qgis row = 1200 - known_value[ 1 ]   # dted1 data in 1200 blocks
     # qgis col =  known_value[ 0 ]
 
-    import pdb
-    pdb.set_trace()  ## joz
+    # import pdb  # joz
+    # pdb.set_trace()  ## joz
     # now with ignore_voids set
     # same as above but now with new expected values
     known_values = {
