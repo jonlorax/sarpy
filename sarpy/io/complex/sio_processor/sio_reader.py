@@ -46,12 +46,11 @@ class SIOReader(object):
         self._filename           =  param_filename
         if not os.path.exists(os.path.dirname(self._filename)):
             raise SarpyIOError('Path {} is not a file'.format(self._filename))
-        # We always open the file as big-endian because the header is always 
-        # big-endian
         self._fid                = open(self._filename, 'rb') 
         self._magic_key          = int.from_bytes(self._fid.read(4))
-        # Check magic key to determine if little endian. If so, convert to big endian.
         byte_order = 'big'
+        # We have to check the _magic_key multiple times for different scenarios
+        # Check the _magic_key for little endian, and set the byte_order accordingly
         if self._magic_key in [0xFE7F01FF, 0xFD7F02FF]:
             byte_order = 'little'
         self._rows               = int.from_bytes(self._fid.read(4), byteorder=byte_order)
@@ -83,6 +82,7 @@ class SIOReader(object):
             self._user_data      = self._fid.read(
                 self._user_data_size).decode("utf-8")
             self._sicdmeta       = SICDType.from_xml_string(self._user_data)
+        # Check to ensure the _magic_key is valid
         if self._magic_key in [0xFF017FFE, 0xFF027FFD, 0xFE7F01FF, 0xFD7F02FF]:
             self._image_data  = numpy.frombuffer(self._fid.read(),
                                                      dtype=self._data_type_str

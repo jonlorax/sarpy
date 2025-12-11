@@ -14,13 +14,11 @@ from sarpy.io.complex.sicd_elements.ImageData import ImageDataType, FullImageTyp
 from sarpy.io.complex.sio_processor.sio_reader import SIOReader as SIOReader
 
 class test_sio_reader(TestCase):
-    # def setUp(self):
-        
-
+    
     def test_read_float_32(self):
         input_sio_reader_32 = "./tests/io/complex/sio_processor/SIOReaderTest_32.sio"
         image_data = numpy.arange(13*17, dtype=numpy.float32).reshape(13, 17)
-        example_sicd = sicd_meta_real_32 = SICDType(
+        example_sicd = SICDType(
             ImageData=ImageDataType(
                 NumRows=image_data.shape[0],
                     NumCols=image_data.shape[1],
