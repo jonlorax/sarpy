@@ -383,7 +383,7 @@ class DTEDReader(object):
 
         """
         if   ignore_voids and numpy.isscalar( elevations)  and elevations == 65535:
-            out = 0
+            out = numpy.uint16( 0 )
         elif ignore_voids and numpy.isscalar( elevations):
             out = (elevations & 0x7f_ff).astype(numpy.int16)
             out *= (-1) ** ((elevations & 0x80_00) != 0)           
