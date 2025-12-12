@@ -60,8 +60,7 @@ def test_check_for_voids_by_list_of_files_true():
 
 @pytest.mark.skipif(not test_data["dted_with_null"], reason="DTED with null data does not exist")
 def test_check_for_voids_by_dir_true():
-    # check_for_voids(   "c:\\Users\\JohnO'Neill\\Downloads\\dem\\dted\\"  )
-    quickCheck = check_for_voids(  os.path.join( parent_path, "dem", "dted" ))  # c:\\Users\\JohnO'Neill\\Downloads\\dem\\dted\\"  )
+    quickCheck = check_for_voids(  os.path.join( parent_path, "dem", "dted" )) 
     # just grab basename off filepath and rebuild the result dict
     # this will help with the cross platoform and personal preference 
     newResults = {}
@@ -69,7 +68,10 @@ def test_check_for_voids_by_dir_true():
         newResults[ os.path.basename( key ) ] = val #  resutls[ basename/dted filename ] = <bool check>
         
     quickAnswer = {"n27_e084_3arc_v1.dt1": 'True', "n33_w119_3arc_v1.dt1": 'True', "n38_w078_3arc_v1.dt1": 'True', "n38_w078_3arc_v2.dt1": 'False', "s01_w070_3arc_v1.dt1": 'True', "s04_w061_3arc_v1.dt1": 'True', "s36_e149_3arc_v1.dt1": 'True'}
-    assert newResults == quickAnswer
+    # this is a set subset test
+    # the dted dir can have subdirectories and/or other files in it
+    #  we just want to verify our known files
+    assert newResults.items() >= quickAnswer.items()
 
     
     
