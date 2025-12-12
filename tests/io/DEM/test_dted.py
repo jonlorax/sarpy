@@ -104,44 +104,30 @@ def test_dted_interpolator_get_elevation_hae_north_west_ignore_voids_default_on_
     assert dem_interpolator.get_elevation_hae(ll[0], ll[1]) == pytest.approx( -32803.4904, abs=0.01 )
     assert dem_interpolator.get_elevation_hae(ll[0], ll[1], ignore_voids=True) == pytest.approx( -36.49, abs=0.01 )
 
-def test_joz_repair_values():
+def test_repair_values():
     import numpy as np
-    print( "joz ing  test_data: {}".format( test_data))
-    array1 = np.array([1, 4, 2, 6, 3, 65535])
+    
+    # numpy math that repair_values with ignore_voids work is based on
+    array1         = np.array([1, 4, 2, 6, 3, 65535])
+    arrayCorrected = np.array([1, 4, 2, 6, 3, 0])
+    # replaces value in place
+    array1[ array1 == 65535] = 0
+    assert np.array_equal( array1, arrayCorrected)
+
+    array1      = np.array([1, 4, 2, 6, 3, 65535])
     dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][2])
-    repaired = dted_reader._repair_values( array1 )
-    print( "[1, 4, 2, 6, 3, 65535]  {}".format( repaired ))
+    repaired    = dted_reader._repair_values( array1 )
+    oldRepair   = np.array([1, 4, 2, 6, 3, -32767] ) # this is what repair_values does when not ignoring_voids, the user's concern
+    assert np.array_equal( repaired , oldRepair  )
     
     repaired = dted_reader._repair_values( array1, True)
-    print( "[1, 4, 2, 6, 3, 65535] trued: {}".format( repaired)    )
+    assert np.array_equal( repaired , arrayCorrected )
 
     special_int = np.uint16( 100 )
-    repaired = dted_reader._repair_values( special_int, True)
-    print("100: {}".format( repaired ))
-
-    special_int = np.uint16( 0 )
-    repaired = dted_reader._repair_values( special_int, True)
-    print("0: {}".format( repaired ))    
-
+    repaired    = dted_reader._repair_values( special_int, True)
+    assert repaired, special_int
+ 
     special_int = np.uint16( 65535 )
     repaired = dted_reader._repair_values( special_int, True)
-    print("65535: {}".format( repaired ))
-    
-    array1[array1 == 65535 ] = 0
-    print( array1)
+    assert np.equal(repaired, np.uint64( 0 ))  # to show values are the same, was getting np.uint64(0)
 
-    array1 = np.array([1, 4, 2, 6, 3, 4])
-    array1[array1 == 65535 ] = 0
-    print( array1)
-
-    array1 = np.array([1, 65535, 2, 6, 3, 65535])
-    array1[array1 == 65535 ] = 0
-    print( array1)
-
-    array1 = np.array([ 65535])
-    array1[array1 == 65535 ] = 0
-    print( array1)
-
-    array1 = np.array([ 100])
-    array1[array1 == 65535 ] = 0
-    print( array1)    
