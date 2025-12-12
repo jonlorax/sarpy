@@ -392,9 +392,14 @@ class DTEDReader(object):
             elevations[ elevations == 65535] = 0
             out = (elevations & 0x7f_ff).astype(numpy.int16)
             out *= (-1) ** ((elevations & 0x80_00) != 0)     
+            
+        # user is not setting ignore_voids thus old way of running this code
         else:
-            logger.warning( "Warning your DTED data has voids in it, this effect interpolation. Try with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
-            print( "Warning your DTED data has voids in it, this effect interpolation. Try with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
+            if numpy.isscalar( elevations):
+                if elevations == 65535:
+                    logger.warning( "Warning your DTED data has voids in it, this effect interpolation. Try with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
+                    print( "Warning your DTED data has voids in it, this effect interpolation. Try with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
+                    
             out = (elevations & 0x7f_ff).astype(numpy.int16)
             out *= (-1) ** ((elevations & 0x80_00) != 0)
         return out
