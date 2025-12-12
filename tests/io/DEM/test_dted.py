@@ -6,7 +6,9 @@ import sarpy.io.DEM.DTED as sarpy_dted
 from sarpy.io.DEM.geoid import GeoidHeight
 
 import tests
-
+# Note
+# set this for your storage of dted and egm files
+# export SARPY_TEST_PATH=<your dem stuff path>
 
 test_data = tests.find_test_data_files(pathlib.Path(__file__).parent / "geoid.json")
 egm96_file = test_data["geoid_files"][0] if test_data["geoid_files"] else None
@@ -17,7 +19,7 @@ def test_interpolator_no_readers():
     llb = [10.0, 20.0, 10.5, 20.5]
     geoid = GeoidHeight(egm96_file)
     dtedinterp = sarpy_dted.DTEDInterpolator([], geoid_file=geoid, lat_lon_box=llb)
-
+    
     assert dtedinterp.get_max_geoid(llb) == 0
     assert dtedinterp.get_max_hae(llb) == geoid(10, 10.5)
 
