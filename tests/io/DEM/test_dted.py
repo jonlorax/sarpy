@@ -115,14 +115,21 @@ def test_joz_repair_values():
     repaired = dted_reader._repair_values( array1, True)
     print( "[1, 4, 2, 6, 3, 65535] trued: {}".format( repaired)    )
 
-    special100 = np.uint16( 100 )
-    repaired = dted_reader._repair_values( special100, True)
+    special_int = np.uint16( 100 )
+    repaired = dted_reader._repair_values( special_int, True)
     print("100: {}".format( repaired ))
 
+    special_int = np.uint16( 0 )
+    repaired = dted_reader._repair_values( special_int, True)
+    print("0: {}".format( repaired ))    
+
+    special_int = np.uint16( 65535 )
+    repaired = dted_reader._repair_values( special_int, True)
+    print("65535: {}".format( repaired ))
+    
     array1[array1 == 65535 ] = 0
     print( array1)
 
-    
     array1 = np.array([1, 4, 2, 6, 3, 4])
     array1[array1 == 65535 ] = 0
     print( array1)
