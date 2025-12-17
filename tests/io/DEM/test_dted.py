@@ -41,8 +41,7 @@ def test_dted_reader():
 # no void tests
 @pytest.mark.skipif(not test_data["dted_with_null"], reason="DTED with null data does not exist")
 def test_dted_reader_south_west_ignore_voids():
-    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][0]) # belive wants the s file
-    print( "Testing Reader test using: {}".format( test_data["dted_with_null"][0] ))
+    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][0], True) 
 
     # From entity ID: SRTM3S04W061V1, date updated: 2013-04-17T12:16:47-05
     # Acquired from https://earthexplorer.usgs.gov/ on 2024-08-21
@@ -60,12 +59,11 @@ def test_dted_reader_south_west_ignore_voids():
         (1004, 797):  7,     # a value among the voids displayed in qgis
     }
     for index, expected_value in known_values.items():
-        assert dted_reader[(index, True)] == expected_value
+        assert dted_reader[index] == expected_value
 
 @pytest.mark.skipif(not test_data["dted_with_null"], reason="DTED with null data does not exist")
 def test_dted_reader_north_west_ignore_voids():
-    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][1]) # belive wants the northern  file
-    print( "Testing Reader test using: {}".format( test_data["dted_with_null"][1] ))
+    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][1],True)
 
     # From entity ID: SRTM3N33W119V1, date updated: 2013-04-17T12:16:47-05
     # Acquired from https://earthexplorer.usgs.gov/ on 2024-08-21
@@ -86,10 +84,8 @@ def test_dted_reader_north_west_ignore_voids():
 def test_dted_interpolator_get_elevation_hae_north_west_ignore_voids():
     ll = [ 33.3174, -118.36258 ]  # catinlia island off California coast VOID cell
     geoid = GeoidHeight(egm96_file)
-    files = test_data["dted_with_null"][1]  #  '/sar/CuratedData_SomeDomestic/sarpy_test/dem/dted/n33_w119_3arc_v1.dt1
+    files = test_data["dted_with_null"][1]  
     dem_interpolator = sarpy_dted.DTEDInterpolator(files=files, geoid_file=geoid, lat_lon_box=ll)
-    print("_ignore_voids_ dted interpolator northen test  ll: {}  elevation HAE : {}".format( ll,  dem_interpolator.get_elevation_hae( ll[0], ll[1], ignore_voids=True )))
-    print("dted interpolator northen test  ll: {}  elevation HAE : {}".format( ll,  dem_interpolator.get_elevation_hae(ll[0], ll[1])))
     assert dem_interpolator.get_elevation_hae(ll[0], ll[1], ignore_voids=True)  == pytest.approx( -36.490,   abs=0.01 )
     assert dem_interpolator.get_elevation_hae(ll[0], ll[1] )                == pytest.approx( -32803.49, abs=0.01 )
 
@@ -100,8 +96,6 @@ def test_dted_interpolator_get_elevation_hae_north_west_ignore_voids_default_on_
     geoid = GeoidHeight(egm96_file)
     files = test_data["dted_with_null"][1]  #  '/sar/CuratedData_SomeDomestic/sarpy_test/dem/dted/n33_w119_3arc_v1.dt1
     dem_interpolator = sarpy_dted.DTEDInterpolator(files=files, geoid_file=geoid, lat_lon_box=ll)
-    print("_ignore_voids_DEFAULT on a void  dted interpolator northen test  ll: {}  elevation HAE : {}".format( ll,  dem_interpolator.get_elevation_hae( ll[0], ll[1] )))
-    print("_ignore_voids         on a void  dted interpolator northen test  ll: {}  elevation HAE : {}".format( ll,  dem_interpolator.get_elevation_hae( ll[0], ll[1], ignore_voids=True )))
     assert dem_interpolator.get_elevation_hae(ll[0], ll[1]) == pytest.approx( -32803.4904, abs=0.01 )
     assert dem_interpolator.get_elevation_hae(ll[0], ll[1], ignore_voids=True) == pytest.approx( -36.49, abs=0.01 )
 
