@@ -98,9 +98,9 @@ class DTEDList(DEMList):
     of the DEM tile.
     """
 
-    __slots__ = ('_root_dir', '_missing_error')
+    __slots__ = ('_root_dir', '_missing_error', '_ignore_voids')
 
-    def __init__(self, root_directory, missing_error=False):
+    def __init__(self, root_directory, missing_error=False, ignore_voids=False):
         """
 
         Parameters
@@ -108,10 +108,13 @@ class DTEDList(DEMList):
         root_directory : str
         missing_error : bool
             Raise an exception when DTED files are missing?
+        ignore_voids: bool
+            to ignore dted void data cells in interpolations, is set when reading the DTED files            
         """
 
         self._root_dir = root_directory
         self._missing_error = missing_error
+        self._ignore_voids  = ignore_voids        
 
     @property
     def root_dir(self):
@@ -263,9 +266,9 @@ class DTEDReader(object):
     and not user convenience.
     """
 
-    __slots__ = ('_file_name', '_origin', '_spacing', '_bounding_box', '_shape', '_mem_map')
+    __slots__ = ('_file_name', '_origin', '_spacing', '_bounding_box', '_shape', '_mem_map', '_ignore_voids')
 
-    def __init__(self, file_name):
+    def __init__(self, file_name, ignore_voids = False):
         self._file_name = file_name
 
         with open(self._file_name, 'rb') as fi:
@@ -301,6 +304,7 @@ class DTEDReader(object):
                                      mode='r',
                                      offset=3428,
                                      shape=shp)
+        self._ignore_voids = ignore_voids
 
     @property
     def origin(self):
@@ -329,19 +333,9 @@ class DTEDReader(object):
             return val + 4 if val >= 0 else val - 2
 
         # we need to manipulate in the second dimension
-        # adding the ignore_voids option
-        # incoming item will still be a tuple but a tuple with a bool
-        # so:
-        #     ( <row>, <col> )  as has been happening for years
-        #     (( <row>, <col> ), bool)  with the bool for ignore_voids
         if isinstance(item, tuple):
             if len(item) > 2:
                 raise ValueError('Cannot slice on more than 2 dimensions')
-            if len(item) == 2:
-                # if someone sending in bool for ignore_voids
-                if isinstance( item[1], bool ):
-                    ignore_voids = item[1]
-                    item         = item[0] # the row/col tuple is first now looks like before
             it = item[1]
             if isinstance(it, int):
                 it1 = new_col_int(it, True)
@@ -358,17 +352,15 @@ class DTEDReader(object):
             data = self._mem_map.__getitem__((item[0], it1))
         else:
             data = self._mem_map[item, 4:-2]
-        return self._repair_values(data, ignore_voids)
+        return self._repair_values(data)
 
-    @staticmethod
-    def _repair_values(elevations, ignore_voids=False):
+    def _repair_values(self, elevations):
         """
         Convert 2-bytes signed magnitude to twos complement.
 
         Parameters
         ----------
         elevations : numpy.ndarray
-        ignore_voids   : bool  should we ignore voids in interpolation calculations
 
         Returns
         -------
@@ -382,13 +374,13 @@ class DTEDReader(object):
             16 bits (2 bytes). The sign bit is in the high order position.
 
         """
-        if   ignore_voids and numpy.isscalar( elevations)  and elevations == 65535:
+        if   self._ignore_voids and numpy.isscalar( elevations)  and elevations == 65535:
             out = numpy.uint16( 0 )
-        elif ignore_voids and numpy.isscalar( elevations):
+        elif  self._ignore_voids and numpy.isscalar( elevations):
             out = (elevations & 0x7f_ff).astype(numpy.int16)
             out *= (-1) ** ((elevations & 0x80_00) != 0)           
         # if elevations is a numpy array
-        elif ignore_voids and 65535 in elevations:
+        elif  self._ignore_voids and 65535 in elevations:
             elevations[ elevations == 65535] = 0
             out = (elevations & 0x7f_ff).astype(numpy.int16)
             out *= (-1) ** ((elevations & 0x80_00) != 0)     
@@ -397,20 +389,20 @@ class DTEDReader(object):
         else:
             if numpy.isscalar( elevations):
                 if elevations == 65535:
-                    logger.warning( "Warning your DTED data has voids in it, this effect interpolation. Try with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
-                    print( "Warning your DTED data has voids in it, this effect interpolation. Try with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
+                    logger.warning( "Warning your DTED data has voids in it, this effect interpolation. Try with reading dted files with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
+                    print( "Warning your DTED data has voids in it, this effect interpolation. Try with reading dted files with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
                     
             out = (elevations & 0x7f_ff).astype(numpy.int16)
             out *= (-1) ** ((elevations & 0x80_00) != 0)
         return out
 
-    def _linear(self, ix, dx, iy, dy, ignore_voids= False):
+    def _linear(self, ix, dx, iy, dy):
         # type: (numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray) -> numpy.ndarray
-        a = (1 - dx) * self._lookup_elevation(ix, iy, ignore_voids) + dx * self._lookup_elevation(ix + 1, iy, ignore_voids)
-        b = (1 - dx) * self._lookup_elevation(ix, iy+1, ignore_voids) + dx * self._lookup_elevation(ix+1, iy+1, ignore_voids)
+        a = (1 - dx) * self._lookup_elevation(ix, iy)   + dx * self._lookup_elevation(ix + 1, iy)
+        b = (1 - dx) * self._lookup_elevation(ix, iy+1) + dx * self._lookup_elevation(ix+1,   iy+1)
         return (1 - dy) * a + dy * b
 
-    def _lookup_elevation(self, ix, iy, ignore_voids = False):
+    def _lookup_elevation(self, ix, iy):
         # type: (numpy.ndarray, numpy.ndarray) -> numpy.ndarray
         t_ix = numpy.copy(ix)
         t_ix[t_ix >= self._shape[0]] = self._shape[0] - 1
@@ -421,7 +413,7 @@ class DTEDReader(object):
         t_iy[t_iy >= self._shape[1]+4] = self._shape[1] + 3
         t_iy[t_iy < 4] = 4
 
-        return self._repair_values(self._mem_map[t_ix, t_iy], ignore_voids)
+        return self._repair_values(self._mem_map[t_ix, t_iy])
 
     def in_bounds(self, lat, lon):
         """
@@ -441,7 +433,7 @@ class DTEDReader(object):
         return (lon >= self._bounding_box[0]) & (lon <= self._bounding_box[1]) & \
                (lat >= self._bounding_box[2]) & (lat <= self._bounding_box[3])
 
-    def _get_elevation(self, lat, lon, ignore_voids= False):
+    def _get_elevation(self, lat, lon):
         # type: (numpy.ndarray, numpy.ndarray) -> numpy.ndarray
 
         # we implicitly require that lat/lon make sense and are contained in this DTED
@@ -453,9 +445,9 @@ class DTEDReader(object):
         # get integer indices via floor
         ix = numpy.asarray(numpy.floor(fx), dtype=numpy.int32)
         iy = numpy.asarray(numpy.floor(fy), dtype=numpy.int32)
-        return self._linear(ix, fx-ix, iy, fy-iy, ignore_voids)
+        return self._linear(ix, fx-ix, iy, fy-iy)
 
-    def get_elevation(self, lat, lon, block_size=50000, ignore_voids=False):
+    def get_elevation(self, lat, lon, block_size=50000):
         """
         Interpolate the elevation values for lat/lon. This is relative to the EGM96
         geoid by DTED specification.
@@ -482,7 +474,7 @@ class DTEDReader(object):
         if block_size is None:
             boolc = self.in_bounds(lat, lon)
             if numpy.any(boolc):
-                out[boolc] = self._get_elevation(lat[boolc], lon[boolc], ignore_voids)
+                out[boolc] = self._get_elevation(lat[boolc], lon[boolc])
         else:
             block_size = min(50000, int(block_size))
             start_block = 0
@@ -492,7 +484,7 @@ class DTEDReader(object):
                 lon1 = lon[start_block:end_block]
                 boolc = self.in_bounds(lat1, lon1)
                 out1 = numpy.full(lat1.shape, numpy.nan, dtype=numpy.float64)
-                out1[boolc] = self._get_elevation(lat1[boolc], lon[boolc], ignore_voids)
+                out1[boolc] = self._get_elevation(lat1[boolc], lon[boolc])
                 out[start_block:end_block] = out1
                 start_block = end_block
 
@@ -581,11 +573,11 @@ class DTEDInterpolator(DEMInterpolator):
 
     __slots__ = ('_readers', '_geoid', '_ref_geoid')
 
-    def __init__(self, files, geoid_file, lat_lon_box=None):
+    def __init__(self, files, geoid_file, lat_lon_box=None, ignore_voids=False):
         if isinstance(files, str):
             files = [files, ]
         # get a reader object for each file
-        self._readers = [DTEDReader(fil) for fil in files]
+        self._readers = [DTEDReader(fil, ignore_voids) for fil in files]
 
         # get the geoid object - we should prefer egm96 .pgm files, since that's the DTED spec
         #   in reality, it makes very little difference, though
@@ -708,21 +700,21 @@ class DTEDInterpolator(DEMInterpolator):
 
         return self._geoid
 
-    def _get_elevation_geoid_from_reader(self, reader, lat, lon, ignore_voids=False):
+    def _get_elevation_geoid_from_reader(self, reader, lat, lon):
         mask = reader.in_bounds(lat, lon)
         values = numpy.full(lat.shape, numpy.nan, dtype=numpy.float64)
         if numpy.any(mask):
             # noinspection PyProtectedMember
-            values[mask] = reader._get_elevation(lat[mask], lon[mask], ignore_voids)
+            values[mask] = reader._get_elevation(lat[mask], lon[mask])
         return mask, values
 
-    def _get_elevation_geoid(self, lat, lon, ignore_voids=False):
+    def _get_elevation_geoid(self, lat, lon):
         out = numpy.full(lat.shape, numpy.nan, dtype=numpy.float64)
         remaining = numpy.ones(lat.shape, dtype=numpy.bool_)
         for reader in self._readers:
             if not numpy.any(remaining):
                 break
-            mask, values = self._get_elevation_geoid_from_reader(reader, lat[remaining], lon[remaining], ignore_voids)
+            mask, values = self._get_elevation_geoid_from_reader(reader, lat[remaining], lon[remaining])
             if numpy.any(mask):
                 work_mask = numpy.copy(remaining)
                 work_mask[remaining] = mask  # mask as a subset of remaining
@@ -730,7 +722,7 @@ class DTEDInterpolator(DEMInterpolator):
                 remaining[work_mask] = False
         return out
 
-    def get_elevation_hae(self, lat, lon, block_size=50000, ignore_voids=False):
+    def get_elevation_hae(self, lat, lon, block_size=50000):
         """
         Get the elevation value relative to the WGS-84 ellipsoid.
 
@@ -756,10 +748,10 @@ class DTEDInterpolator(DEMInterpolator):
             The elevation relative to the WGS-84 ellipsoid.
         """
 
-        return self.get_elevation_geoid(lat, lon, block_size=block_size, ignore_voids=ignore_voids) + \
+        return self.get_elevation_geoid(lat, lon, block_size=block_size) + \
             self._geoid.get(lat, lon, block_size=block_size)
 
-    def get_elevation_geoid(self, lat, lon, block_size=50000, ignore_voids=False):
+    def get_elevation_geoid(self, lat, lon, block_size=50000):
         """
         Get the elevation value relative to the geoid.
 
@@ -796,7 +788,7 @@ class DTEDInterpolator(DEMInterpolator):
             while start_block < lat.size:
                 end_block = min(lat.size, start_block+block_size)
                 out[start_block:end_block] = self._get_elevation_geoid(
-                    lat[start_block:end_block], lon[start_block:end_block], ignore_voids)
+                    lat[start_block:end_block], lon[start_block:end_block])
                 start_block = end_block
         out[numpy.isnan(out)] = 0.0  # set missing values to geoid=0 (MSL)
 
