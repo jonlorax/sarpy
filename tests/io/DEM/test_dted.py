@@ -89,7 +89,7 @@ def test_dted_interpolator_get_elevation_hae_north_west_ignore_voids():
     assert dem_interpolator.get_elevation_hae(ll[0], ll[1] )                == pytest.approx( -32803.49, abs=0.01 )
 
     dem_interpolator = sarpy_dted.DTEDInterpolator(files=files, geoid_file=geoid, lat_lon_box=ll, ignore_voids=True)
-    assert dem_interpolator.get_elevation_hae(ll[0], ll[1], ignore_voids=True)  == pytest.approx( -36.490,   abs=0.01 )
+    assert dem_interpolator.get_elevation_hae(ll[0], ll[1])  == pytest.approx( -36.490,   abs=0.01 )
     
 
 
