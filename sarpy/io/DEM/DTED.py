@@ -323,7 +323,7 @@ class DTEDReader(object):
 
         return numpy.copy(self._bounding_box)
 
-    def __getitem__(self, item, ignore_voids = False):
+    def __getitem__(self, item):
         def new_col_int(val, begin):
             if val is None:
                 if begin:
@@ -605,7 +605,7 @@ class DTEDInterpolator(DEMInterpolator):
         self._min_geoid = None
 
     @classmethod
-    def from_coords_and_list(cls, lat_lon_box, dted_list, dem_type=None, geoid_file=None):
+    def from_coords_and_list(cls, lat_lon_box, dted_list, dem_type=None, geoid_file=None, ignore_voids=False):
         """
         Construct a `DTEDInterpolator` from a coordinate collection and `DTEDList` object.
 
@@ -624,6 +624,8 @@ class DTEDInterpolator(DEMInterpolator):
             The `GeoidHeight` object, an egm file name, or root directory containing
             one of the egm files in the sub-directory "geoid". If `None`, then default
             to the root directory of `dted_list`.
+        ignore_voids: Bool
+            to be passed on to DTEDReader to tell interpolation to not use void values
 
         Returns
         -------
@@ -640,10 +642,10 @@ class DTEDInterpolator(DEMInterpolator):
         if geoid_file is None:
             geoid_file = dted_list.root_dir
 
-        return cls(dted_list.get_file_list(lat_lon_box, dem_type=dem_type), geoid_file, lat_lon_box=lat_lon_box)
+        return cls(dted_list.get_file_list(lat_lon_box, dem_type=dem_type), geoid_file, lat_lon_box=lat_lon_box, ignore_voids=ignore_voids)
 
     @classmethod
-    def from_reference_point(cls, ref_point, dted_list, dem_type=None, geoid_file=None, pad_value=0.1):
+    def from_reference_point(cls, ref_point, dted_list, dem_type=None, geoid_file=None, pad_value=0.1, ignore_voids=False):
         """
         Construct a DTEDInterpolator object by padding around the reference point by
         `pad_value` latitude degrees (1 degree ~ 111 km or 69 miles).
@@ -666,7 +668,9 @@ class DTEDInterpolator(DEMInterpolator):
             to the root directory of `dted_list`.
         pad_value : float
             The degree value to pad by.
-
+        ignore_voids: Bool
+            to be passed on to DTEDReader to tell interpolation to not use void values
+            
         Returns
         -------
         DTEDInterpolator
@@ -690,7 +694,7 @@ class DTEDInterpolator(DEMInterpolator):
             lon_min += 360
 
         return cls.from_coords_and_list(
-            [lat_min, lat_max, lon_min, lon_max], dted_list, dem_type=dem_type, geoid_file=geoid_file)
+            [lat_min, lat_max, lon_min, lon_max], dted_list, dem_type=dem_type, geoid_file=geoid_file, ignore_voids=ignore_voids)
 
     @property
     def geoid(self):  # type: () -> GeoidHeight
@@ -738,9 +742,6 @@ class DTEDInterpolator(DEMInterpolator):
             If `None`, then the entire calculation will proceed as a single block.
             Otherwise, block processing using blocks of the given size will be used.
             A minimum value of 50000 will be enforced here.
-        ignore_voids : bool  
-            True mean do NOT use void dted values in interpolation calculation
-            the value is set to 0
             
         Returns
         -------
@@ -767,9 +768,6 @@ class DTEDInterpolator(DEMInterpolator):
             Otherwise, block processing using blocks of the given size will be used.
             The minimum value used for this is 50000, and any smaller value will be
             replaced with 50000. Default is 50000.
-        ignore_voids : bool  
-            True mean do NOT use void dted values in interpolation calculation
-            the value is set to 0
 
         Returns
         -------
@@ -780,7 +778,7 @@ class DTEDInterpolator(DEMInterpolator):
         o_shape, lat, lon = argument_validation(lat, lon)
 
         if block_size is None:
-            out = self._get_elevation_geoid(lat, lon, ignore_voids)
+            out = self._get_elevation_geoid(lat, lon)
         else:
             block_size = min(50000, int(block_size))
             out = numpy.full(lat.shape, numpy.nan, dtype=numpy.float64)
