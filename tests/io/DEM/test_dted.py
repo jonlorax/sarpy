@@ -78,7 +78,7 @@ def test_dted_reader_north_west_ignore_voids():
         (813, 926):  110     # a value among the voids displayed in qgi
     }
     for index, expected_value in known_values.items():
-        assert dted_reader[(index, True)] == expected_value
+        assert dted_reader[index] == expected_value
 
 @pytest.mark.skipif(not test_data["dted_with_null"], reason="DTED with null data does not exist")
 def test_dted_interpolator_get_elevation_hae_north_west_ignore_voids():
@@ -86,18 +86,23 @@ def test_dted_interpolator_get_elevation_hae_north_west_ignore_voids():
     geoid = GeoidHeight(egm96_file)
     files = test_data["dted_with_null"][1]  
     dem_interpolator = sarpy_dted.DTEDInterpolator(files=files, geoid_file=geoid, lat_lon_box=ll)
-    assert dem_interpolator.get_elevation_hae(ll[0], ll[1], ignore_voids=True)  == pytest.approx( -36.490,   abs=0.01 )
     assert dem_interpolator.get_elevation_hae(ll[0], ll[1] )                == pytest.approx( -32803.49, abs=0.01 )
+
+    dem_interpolator = sarpy_dted.DTEDInterpolator(files=files, geoid_file=geoid, lat_lon_box=ll, ignore_voids=True)
+    assert dem_interpolator.get_elevation_hae(ll[0], ll[1], ignore_voids=True)  == pytest.approx( -36.490,   abs=0.01 )
+    
 
 
 @pytest.mark.skipif(not test_data["dted_with_null"], reason="DTED with null data does not exist")
 def test_dted_interpolator_get_elevation_hae_north_west_ignore_voids_default_on_void_data():
     ll = [ 33.3174, -118.36258 ]  # catinlia island off California coast VOID cell
     geoid = GeoidHeight(egm96_file)
-    files = test_data["dted_with_null"][1]  #  '/sar/CuratedData_SomeDomestic/sarpy_test/dem/dted/n33_w119_3arc_v1.dt1
+    files = test_data["dted_with_null"][1] 
     dem_interpolator = sarpy_dted.DTEDInterpolator(files=files, geoid_file=geoid, lat_lon_box=ll)
     assert dem_interpolator.get_elevation_hae(ll[0], ll[1]) == pytest.approx( -32803.4904, abs=0.01 )
-    assert dem_interpolator.get_elevation_hae(ll[0], ll[1], ignore_voids=True) == pytest.approx( -36.49, abs=0.01 )
+
+    dem_interpolator = sarpy_dted.DTEDInterpolator(files=files, geoid_file=geoid, lat_lon_box=ll, ignore_voids=True)
+    assert dem_interpolator.get_elevation_hae(ll[0], ll[1]) == pytest.approx( -36.49, abs=0.01 )
 
 def test_repair_values():
     import numpy as np
@@ -114,15 +119,34 @@ def test_repair_values():
     repaired    = dted_reader._repair_values( array1 )
     oldRepair   = np.array([1, 4, 2, 6, 3, -32767] ) # this is what repair_values does when not ignoring_voids, the user's concern
     assert np.array_equal( repaired , oldRepair  )
-    
-    repaired = dted_reader._repair_values( array1, True)
+
+    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][2], ignore_voids=True)
+    repaired    = dted_reader._repair_values( array1 )
     assert np.array_equal( repaired , arrayCorrected )
 
     special_int = np.uint16( 100 )
-    repaired    = dted_reader._repair_values( special_int, True)
+    repaired    = dted_reader._repair_values( special_int)
     assert repaired, special_int
  
     special_int = np.uint16( 65535 )
-    repaired = dted_reader._repair_values( special_int, True)
+    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][2], ignore_voids=True)
+    repaired = dted_reader._repair_values( special_int)
     assert np.equal(repaired, np.uint64( 0 ))  # to show values are the same, was getting np.uint64(0)
+
+def test_from_coords_and_list():
+
+    # lat long box
+    # The bounding box of the form `[lat min, lat max, lon min, lon max]`
+    lat_lon_box = [ 33.3174, 33.8174,  -118.36258, -118.000 ]  # catinlia island off California coast VOID cell
+    ll          = [ 33.3174, -118.36258 ]  # catinlia island off California coast VOID cell
+    geoid = GeoidHeight(egm96_file)
+    files = test_data["dted_with_null"][1]
+    dted_root_dir = '/sar/CuratedData_SomeDomestic/sarpy_test/dem/' # dir above dted
+    tmplist          = sarpy_dted.DTEDList( dted_root_dir)
+    dem_interpolator = sarpy_dted.DTEDInterpolator.from_coords_and_list( lat_lon_box, tmplist, geoid_file=geoid)
+    assert dem_interpolator.get_elevation_hae(ll[0], ll[1]) == pytest.approx( -32803.4904, abs=0.01 )
+
+    dem_interpolator = sarpy_dted.DTEDInterpolator.from_coords_and_list( lat_lon_box, tmplist, geoid_file=geoid, ignore_voids=True)
+    assert dem_interpolator.get_elevation_hae(ll[0], ll[1]) == pytest.approx( -36.49, abs=0.01 ) # ignore_voids value
+
 
