@@ -266,7 +266,7 @@ class DTEDReader(object):
     and not user convenience.
     """
 
-    __slots__ = ('_file_name', '_origin', '_spacing', '_bounding_box', '_shape', '_mem_map', '_ignore_voids')
+    __slots__ = ('_file_name', '_origin', '_spacing', '_bounding_box', '_shape', '_mem_map')
 
     def __init__(self, file_name, ignore_voids = False):
         self._file_name = file_name
@@ -299,12 +299,21 @@ class DTEDReader(object):
         #   and 4 extra (checksum) at the end - look to MIL-PRF-89020B for an explanation
         # To enable memory map usage, we will spoof it as a raster and adjust column indices
         shp = (int(self._shape[0]), int(self._shape[1]) + 6)
-        self._mem_map = numpy.memmap(self._file_name,
+        tmp_mem_map = numpy.memmap(self._file_name,
                                      dtype=numpy.dtype('>u2'),
                                      mode='r',
                                      offset=3428,
                                      shape=shp)
-        self._ignore_voids = ignore_voids
+        # if user wants to ignore_void in interpolation we remove them here just after reading the file in
+        if ignore_voids:
+            self._mem_map = numpy.where(tmp_mem_map == 65535, 0, tmp_mem_map)
+        # user has not set ignore_voids thus old way of running this code
+        else:
+            # see if void data in dted data that is a single cell/ a scalar or an array of cells
+            self._mem_map = tmp_mem_map
+            if (65535 in self._mem_map ):
+                    logger.warning( "Warning your DTED data has voids in it, this effect interpolation. Try with reading dted files with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
+                    print( "Warning your DTED data has voids in it, this effect interpolation. Try with reading dted files with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
 
     @property
     def origin(self):
@@ -373,27 +382,9 @@ class DTEDReader(object):
             All elevation values are signed magnitude binary integers, right justified,
             16 bits (2 bytes). The sign bit is in the high order position.
 
-        """
-        if   self._ignore_voids and numpy.isscalar( elevations)  and elevations == 65535:
-            out = numpy.uint16( 0 )
-        elif  self._ignore_voids and numpy.isscalar( elevations):
-            out = (elevations & 0x7f_ff).astype(numpy.int16)
-            out *= (-1) ** ((elevations & 0x80_00) != 0)           
-        # if elevations is a numpy array
-        elif  self._ignore_voids and 65535 in elevations:
-            elevations[ elevations == 65535] = 0
-            out = (elevations & 0x7f_ff).astype(numpy.int16)
-            out *= (-1) ** ((elevations & 0x80_00) != 0)     
-            
-        # user is not setting ignore_voids thus old way of running this code
-        else:
-            if numpy.isscalar( elevations):
-                if elevations == 65535:
-                    logger.warning( "Warning your DTED data has voids in it, this effect interpolation. Try with reading dted files with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
-                    print( "Warning your DTED data has voids in it, this effect interpolation. Try with reading dted files with ignore_voids=True which will zero the void data.  See dted_check_voids.py in utils directory to check if your DTED files have voids in them.")
-                    
-            out = (elevations & 0x7f_ff).astype(numpy.int16)
-            out *= (-1) ** ((elevations & 0x80_00) != 0)
+        """              
+        out = (elevations & 0x7f_ff).astype(numpy.int16)
+        out *= (-1) ** ((elevations & 0x80_00) != 0)
         return out
 
     def _linear(self, ix, dx, iy, dy):
