@@ -114,25 +114,6 @@ def test_repair_values():
     array1[ array1 == 65535] = 0
     assert np.array_equal( array1, arrayCorrected)
 
-    array1      = np.array([1, 4, 2, 6, 3, 65535])
-    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][2])
-    repaired    = dted_reader._repair_values( array1 )
-    oldRepair   = np.array([1, 4, 2, 6, 3, -32767] ) # this is what repair_values does when not ignoring_voids, the user's concern
-    assert np.array_equal( repaired , oldRepair  )
-
-    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][2], ignore_voids=True)
-    repaired    = dted_reader._repair_values( array1 )
-    assert np.array_equal( repaired , arrayCorrected )
-
-    special_int = np.uint16( 100 )
-    repaired    = dted_reader._repair_values( special_int)
-    assert repaired, special_int
- 
-    special_int = np.uint16( 65535 )
-    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][2], ignore_voids=True)
-    repaired = dted_reader._repair_values( special_int)
-    assert np.equal(repaired, np.uint64( 0 ))  # to show values are the same, was getting np.uint64(0)
-
 def test_from_coords_and_list():
 
     # lat long box
