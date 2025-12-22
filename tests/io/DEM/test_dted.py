@@ -173,7 +173,7 @@ def test_dted_reader_south_east():
 
 @pytest.mark.skipif(not test_data["dted_with_null"], reason="DTED with null data does not exist")
 def test_dted_reader_south_east_ignore_voids():
-    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][4]) # belive wants the Austrial
+    dted_reader = sarpy_dted.DTEDReader(test_data["dted_with_null"][4], True) # belive wants the Austrial
 
     # From entity ID:  SRTM3S36E149V1, date updated: 2005-02-01 00:00:00-06  Austrialia south west of Sydney
     # Acquired from https://earthexplorer.usgs.gov/ on 2025-08-28
@@ -270,7 +270,6 @@ def test_dted_interpolator_get_elevation_hae_south_east_cross_equator():
 
 def test_repair_values():
     import numpy as np
-    
     # numpy math that repair_values with ignore_voids work is based on
     array1         = np.array([1, 4, 2, 6, 3, 65535])
     arrayCorrected = np.array([1, 4, 2, 6, 3, 0])
@@ -279,14 +278,14 @@ def test_repair_values():
     assert np.array_equal( array1, arrayCorrected)
 
 def test_from_coords_and_list():
-
+    import os
     # lat long box
     # The bounding box of the form `[lat min, lat max, lon min, lon max]`
     lat_lon_box = [ 33.3174, 33.8174,  -118.36258, -118.000 ]  # catinlia island off California coast VOID cell
     ll          = [ 33.3174, -118.36258 ]  # catinlia island off California coast VOID cell
     geoid = GeoidHeight(egm96_file)
     files = test_data["dted_with_null"][1]
-    dted_root_dir = '<dir path above dted>' # dir above dted
+    dted_root_dir = os.path.join( tests.parent_path, 'dem' ) # dir above dted
     tmplist          = sarpy_dted.DTEDList( dted_root_dir)
     dem_interpolator = sarpy_dted.DTEDInterpolator.from_coords_and_list( lat_lon_box, tmplist, geoid_file=geoid)
     assert dem_interpolator.get_elevation_hae(ll[0], ll[1]) == pytest.approx( -32803.4904, abs=0.01 )
