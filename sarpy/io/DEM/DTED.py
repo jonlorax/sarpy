@@ -360,7 +360,8 @@ class DTEDReader(object):
             data = self._mem_map[item, 4:-2]
         return self._repair_values(data)
 
-    def _repair_values(self, elevations):
+    @staticmethod
+    def _repair_values(elevations):
         """
         Convert 2-bytes signed magnitude to twos complement.
 
