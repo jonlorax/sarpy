@@ -98,23 +98,20 @@ class DTEDList(DEMList):
     of the DEM tile.
     """
 
-    __slots__ = ('_root_dir', '_missing_error', '_ignore_voids')
+    __slots__ = ('_root_dir', '_missing_error')
 
-    def __init__(self, root_directory, missing_error=False, ignore_voids=False):
+    def __init__(self, root_directory, missing_error=False):
         """
 
         Parameters
         ----------
         root_directory : str
         missing_error : bool
-            Raise an exception when DTED files are missing?
-        ignore_voids: bool
-            to ignore dted void data cells in interpolations, is set when reading the DTED files            
+            Raise an exception when DTED files are missing?      
         """
 
         self._root_dir = root_directory
-        self._missing_error = missing_error
-        self._ignore_voids  = ignore_voids        
+        self._missing_error = missing_error 
 
     @property
     def root_dir(self):
